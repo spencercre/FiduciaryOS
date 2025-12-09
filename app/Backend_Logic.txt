@@ -1,0 +1,144 @@
+const functions = require("firebase-functions");
+const admin = require("firebase-admin");
+const { PDFDocument } = require("pdf-lib"); // Library for PDF manipulation
+
+admin.initializeApp();
+const db = admin.firestore();
+
+// --- 1. THE COURT REPORT GENERATOR ---
+// This function runs on the server to generate a legally binding PDF.
+exports.generateCourtAccounting = functions.https.onCall(async (data, context) => {
+  // A. Security Check
+  if (!context.auth) {
+    throw new functions.https.HttpsError("unauthenticated", "User must be logged in.");
+  }
+
+  const trustId = data.trustId;
+  const trustRef = db.collection("trusts").doc(trustId);
+  const trustSnap = await trustRef.get();
+
+  // B. Fiduciary Validation
+  if (trustSnap.data().fiduciary_uid !== context.auth.uid) {
+    throw new functions.https.HttpsError("permission-denied", "Only the Fiduciary can generate court reports.");
+  }
+
+  // C. Fetch Data
+  const ledgerSnap = await trustRef.collection("transactions").orderBy("date").get();
+  const transactions = ledgerSnap.docs.map(doc => doc.data());
+
+  // D. Logic: Calculate Totals (Server-Side is safer than Client-Side)
+  let totalReceipts = 0;
+  let totalDisbursements = 0;
+
+  transactions.forEach(tx => {
+    if (tx.type === "Receipt") totalReceipts += tx.amount;
+    if (tx.type === "Disbursement") totalDisbursements += tx.amount;
+  });
+
+  // E. Create PDF (Simulation of PDF-Lib logic)
+  // In a real deployment, we would load the 'GC-400.pdf' template and fill fields.
+  // For this prototype, we return the calculated summary data.
+  
+  return {
+    success: true,
+    summary: {
+      trustName: trustSnap.data().name,
+      periodStart: "2024-01-01",
+      periodEnd: "2024-12-31",
+      totalReceipts: totalReceipts,
+      totalDisbursements: totalDisbursements,
+      netCash: totalReceipts - totalDisbursements
+    },
+    message: "PDF Generation logic executed securely on server."
+  };
+});
+
+// --- 2. THE DEAD MAN'S SWITCH WATCHDOG ---
+// Runs automatically every 24 hours at midnight.
+exports.checkDeadMansSwitch = functions.pubsub.schedule("every 24 hours").onRun(async (context) => {
+  const now = admin.firestore.Timestamp.now();
+  const THIRTY_DAYS_AGO = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+
+  // Query: Find all Fiduciaries who haven't logged in for 30 days
+  const staleTrustsQuery = await db.collection("trusts")
+    .where("last_login", "<", THIRTY_DAYS_AGO)
+    .where("status", "==", "active")
+    .get();
+
+  if (staleTrustsQuery.empty) {
+    console.log("No inactivity detected.");
+    return null;
+  }
+
+  const batch = db.batch();
+
+  staleTrustsQuery.docs.forEach(doc => {
+    // Action: Flag the trust for succession
+    batch.update(doc.ref, {
+      status: "incapacity_review",
+      incapacity_flag_date: now
+    });
+
+    // TODO: Send Email to Successor Trustee (using SendGrid or similar)
+    console.log(`Triggering Dead Man's Switch for Trust ID: ${doc.id}`);
+  });
+
+  return batch.commit();
+});
+
+// --- 3. THE IMMUTABLE AUDIT LOGGER ---
+// Watches the 'privileged' collection. Any change is logged permanently.
+exports.logPrivilegedAccess = functions.firestore
+  .document("trusts/{trustId}/privileged/{docId}")
+  .onWrite((change, context) => {
+    const docData = change.after.exists ? change.after.data() : null;
+    const eventType = change.after.exists ? (change.before.exists ? "UPDATE" : "CREATE") : "DELETE";
+
+    // Write to a separate, read-only collection
+    return db.collection("audit_logs").add({
+      timestamp: admin.firestore.FieldValue.serverTimestamp(),
+      trustId: context.params.trustId,
+      documentId: context.params.docId,
+      action: eventType,
+      user: "System/Admin", // In real triggers, we'd track the auth context causing the write
+      metadata: {
+        fileName: docData ? docData.name : "Deleted File"
+      }
+    });
+  });
+
+// --- 4. THE SMART TRIAGE BOT ---
+// Triggered on new email ingestion (simulated via Firestore write to 'inbox')
+exports.ingestAndTriageEmail = functions.firestore
+  .document("trusts/{trustId}/inbox/{emailId}")
+  .onCreate(async (snap, context) => {
+    const emailData = snap.data();
+    const trustId = context.params.trustId;
+    const sender = emailData.from;
+
+    // Fetch Trust Settings to get known contacts
+    const trustSnap = await db.collection("trusts").doc(trustId).get();
+    const trustSettings = trustSnap.data();
+
+    const attorneyEmail = trustSettings.attorney_email; // e.g., "lawyer@firm.com"
+    const beneficiaryEmails = trustSettings.beneficiary_emails || []; // Array
+
+    let destinationFolder = "quarantine"; // Default safety net
+    let classification = "needs_review";
+
+    // A. Smart Logic
+    if (sender === attorneyEmail) {
+      destinationFolder = "privileged";
+      classification = "attorney_client_privilege";
+    } else if (beneficiaryEmails.includes(sender)) {
+      destinationFolder = "public";
+      classification = "general_correspondence";
+    }
+
+    // B. Execute Move (Update metadata)
+    return snap.ref.update({
+      folder: destinationFolder,
+      classification: classification,
+      auto_triaged_at: admin.firestore.FieldValue.serverTimestamp()
+    });
+  });

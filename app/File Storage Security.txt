@@ -1,0 +1,41 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    // Helper: User is Fiduciary
+    function isFiduciary(trustId) {
+      return firestore.get(/databases/(default)/documents/trusts/$(trustId)).data.fiduciary_uid == request.auth.uid;
+    }
+
+    // PATH: /trusts/{trustId}/public/{fileName}
+    // Safe for beneficiaries
+    match /trusts/{trustId}/public/{fileName} {
+      allow read: if request.auth != null; // Simplified: In prod, check beneficiary list
+      allow write: if isFiduciary(trustId);
+    }
+
+    // PATH: /trusts/{trustId}/privileged/{fileName}
+    // THE IRON VAULT: Defense Memos, Draft Valuations
+    match /trusts/{trustId}/privileged/{fileName} {
+      allow read: if isFiduciary(trustId);
+      // WRITE RULE: Enforce Metadata Indexing for Hybrid Encryption
+      // The file body is blind (encrypted), so tags/description are mandatory for search.
+      allow write: if isFiduciary(trustId)
+                   && request.resource.metadata.keys().hasAll(['tags', 'description'])
+                   && request.resource.metadata.tags.size() > 0
+                   && request.resource.metadata.description.size() > 0;
+    }
+
+    // PATH: /trusts/{trustId}/legacy_protocol/{fileName}
+    // THE DEAD MAN'S SWITCH
+    match /trusts/{trustId}/legacy_protocol/{fileName} {
+      // Allow read ONLY if the Fiduciary is marked 'incapacitated' in Firestore
+      // AND the successor trustee is the one asking.
+      allow read: if firestore.get(/databases/(default)/documents/trusts/$(trustId)).data.fiduciary_status == 'incapacitated'
+                  && request.auth.uid == firestore.get(/databases/(default)/documents/trusts/$(trustId)).data.successor_uid;
+      
+      // Only the active Fiduciary can write these secrets while alive
+      allow write: if isFiduciary(trustId);
+    }
+  }
+}
