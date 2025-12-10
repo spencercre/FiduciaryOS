@@ -11,31 +11,10 @@ import {
   Clock, Play, Square, Plus, Receipt, List, Filter, FileCheck, Mail, MoreHorizontal, Download, Phone, Briefcase as BriefcaseIcon, BadgeCheck, BookOpen, ClipboardList, Loader, ChevronDown, ChevronUp, Map, AlignLeft, AtSign
 } from 'lucide-react';
 
-// --- FIREBASE SDK ---
-import { initializeApp } from 'firebase/app';
-import { getAuth, signInAnonymously } from 'firebase/auth';
-import { getFirestore, collection, doc, getDocs, setDoc, onSnapshot, writeBatch } from 'firebase/firestore';
-
-// --- CONFIGURATION ---
-// NOTE: Replace these with your actual Firebase configuration in VS Code
-const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_APP_ID"
-};
-
-// Initialize Firebase only if config is valid (prevents local crashes if keys are missing)
-let app, auth, db;
-try {
-  app = initializeApp(firebaseConfig);
-  auth = getAuth(app);
-  db = getFirestore(app);
-} catch (e) {
-  console.warn("Firebase not initialized. Using offline mock mode.");
-}
+// --- FIREBASE IMPORTS ---
+import { auth, db } from './firebase'; 
+import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from 'firebase/auth';
+import { collection, getDocs } from 'firebase/firestore';
 
 const appId = 'fiduciary-os-local-dev';
 
@@ -206,6 +185,9 @@ const INCOMING_EMAILS = [
 ];
 
 const getAccountingData = (trustId) => {
+    // FIX: Handle undefined or mismatched trustId
+    if (!trustId) return { charges: [], credits: [] };
+    
     let charges = [ { id: 'A', name: "Property on Hand (Start)", value: 14200000 }, { id: 'B', name: "Receipts (Income)", value: 150000 } ];
     let credits = [ { id: 'E', name: "Disbursements (Expenses)", value: 25000 }, { id: 'H', name: "Property on Hand (Ending)", value: 14375000 } ];
     if (trustId === 2) { credits[0].value = 25500; }
@@ -848,14 +830,16 @@ function MorningBriefing({ onAnalyzeRisk, userName = "Larry" }) {
   );
 }
 
-function Dashboard({ trusts, onSelectTrust, onAnalyzeRisk, onNavigateToTasks }) {
+function Dashboard({ trusts, onSelectTrust, onAnalyzeRisk, onNavigateToTasks, totalAUM }) {
+    const formatCurrency = (amount) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount);
+
     return (
     <div className="space-y-6">
         {/* CEO STATS (RESTORED & FIXED) */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-2">
             <div className="walnut-card p-4 flex flex-col justify-between">
                  <p className="text-[10px] uppercase font-bold text-stone-400 tracking-widest">Total AUM</p>
-                 <p className="text-2xl font-serif font-bold text-stone-900">$21.8M</p>
+                 <p className="text-2xl font-serif font-bold text-stone-900">{formatCurrency(totalAUM)}</p>
                  <div className="w-full bg-stone-100 h-1 mt-2 rounded-full overflow-hidden"><div className="bg-racing-green h-full w-[70%]"></div></div>
             </div>
             <div className="walnut-card p-4 flex flex-col justify-between">
@@ -897,6 +881,46 @@ function Dashboard({ trusts, onSelectTrust, onAnalyzeRisk, onNavigateToTasks }) 
     );
 }
 
+// --- LOGIN SCREEN COMPONENT ---
+const LoginScreen = () => {
+  const handleLogin = async () => {
+    const provider = new GoogleAuthProvider();
+    try {
+      await signInWithPopup(auth, provider);
+    } catch (error) {
+      console.error("Login failed", error);
+      alert("Login failed: " + error.message);
+    }
+  };
+
+  return (
+    <>
+      <GlobalStyles />
+      <div className="min-h-screen bg-stone-50 flex flex-col items-center justify-center p-4">
+        <div className="walnut-card max-w-md w-full p-8 text-center shadow-xl border-t-4 border-racing-green">
+           <div className="flex justify-center mb-6">
+              <div className="w-16 h-16 bg-racing-green rounded-full flex items-center justify-center">
+                 <Shield className="text-white h-8 w-8" />
+              </div>
+           </div>
+           <h1 className="font-serif text-3xl font-bold text-stone-900 mb-2">Fiduciary OS</h1>
+           <p className="text-stone-500 font-serif italic mb-8">Secure Trust Administration System</p>
+           
+           <button 
+             onClick={handleLogin}
+             className="w-full py-3 px-4 bg-white border border-stone-300 rounded shadow-sm text-stone-700 font-bold font-sans hover:bg-stone-50 transition-all flex items-center justify-center"
+           >
+             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5 mr-3" />
+             Sign in with Google
+           </button>
+           
+           <p className="mt-6 text-xs text-stone-400">Restricted Access. Authorized Fiduciaries Only.</p>
+        </div>
+      </div>
+    </>
+  );
+};
+
 const App = () => {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [selectedTrustId, setSelectedTrustId] = useState(null);
@@ -909,16 +933,27 @@ const App = () => {
   const [tasks, setTasks] = useState([]);
   const [vendors, setVendors] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [totalAUM, setTotalAUM] = useState(0);
+  const [documents, setDocuments] = useState([]);
 
   // --- INITIALIZATION: FIREBASE + SEED ---
   useEffect(() => {
+    // Auth Listener
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setAuthLoading(false);
+    });
+
+    // App Init
     const init = async () => {
       const handleResize = () => { setIsMobile(window.innerWidth < 1024); if (window.innerWidth >= 1024) setIsOpen(false); };
       handleResize();
       window.addEventListener('resize', handleResize);
 
-      // MOCK DB LOAD (Replace with real Firebase calls in Prod)
-      setTrusts(SEED_TRUSTS);
+      // MOCK DB LOAD (Tasks/Vendors still mock for now)
+      // Trusts are now fetched live from Firestore
       setTasks(SEED_TASKS);
       setVendors(SEED_VENDORS);
       setLoading(false);
@@ -926,18 +961,84 @@ const App = () => {
       return () => window.removeEventListener('resize', handleResize);
     };
     init();
-  }, []);
+
+    // Fetch Trusts Data (Live)
+    const fetchTrustsData = async () => {
+        if (!db) return;
+        try {
+            const querySnapshot = await getDocs(collection(db, "trusts"));
+            const loadedTrusts = [];
+            let sum = 0;
+
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                // Map Firestore doc to Trust object structure
+                loadedTrusts.push({
+                    id: doc.id,
+                    name: data.name || "Unnamed Trust",
+                    situs: data.situs || "Unknown",
+                    assets: Number(data.assets || 0),
+                    // Preserve other fields if needed or default them
+                    type: data.type || "Trust",
+                    status: data.status || "active",
+                    progress: 0,
+                    nextTask: "Review",
+                    ein: data.ein || "",
+                    dateOfDeath: data.date_of_death || "N/A"
+                });
+                sum += Number(data.assets || 0);
+            });
+            
+            setTrusts(loadedTrusts);
+            setTotalAUM(sum);
+        } catch (error) {
+            console.error("Error fetching trusts:", error);
+        }
+    };
+    // Fetch Documents (Context Inbox)
+    const fetchDocuments = async () => {
+        if (!db) return;
+        try {
+            const querySnapshot = await getDocs(collection(db, "documents"));
+            const docs = [];
+            querySnapshot.forEach((doc) => {
+                const data = doc.data();
+                docs.push({
+                    id: doc.id,
+                    sender: data.trustName || "Unknown Trust", // Mapping trustName to sender for visibility
+                    subject: data.subject || "(No Subject)",
+                    date: "Today",
+                    body: data.body || "Retrieved from secure storage.",
+                    type: "alert",
+                    aiConfidence: 0.99
+                });
+            });
+            setDocuments(docs);
+        } catch (error) {
+            console.error("Error fetching documents:", error);
+        }
+    };
+
+    if (user) {
+        fetchTrustsData();
+        fetchDocuments();
+    }
+
+    return () => unsubscribeAuth();
+  }, [user]);
 
   const handleTabSwitch = (tab) => { setActiveTab(tab); setSelectedTrustId(null); setOraclePrompt(null); };
   
   const handleAnalyzeRisk = (riskType) => {
-    setSelectedTrustId('t1'); // Use ID string 't1' from seed
+    setSelectedTrustId(1); // Use ID number 1 from seed (Fixed from 't1' string)
     if (riskType === 'greg') setOraclePrompt("Analyze Gregory Smith's recent emails for hostility.");
     if (riskType === 'tax') setOraclePrompt("Analyze tax cliff liability.");
     if (riskType === 'nexus') setOraclePrompt("Check Nexus liability for California trustee.");
   };
 
-  if (loading) return <div className="h-screen flex items-center justify-center bg-stone-50 font-serif text-racing-green"><Loader className="animate-spin mr-2"/> Loading Fiduciary OS...</div>;
+  if (authLoading || loading) return <div className="h-screen flex items-center justify-center bg-stone-50 font-serif text-racing-green"><Loader className="animate-spin mr-2"/> Loading Fiduciary OS...</div>;
+
+  if (!user) return <LoginScreen />;
 
   return (
     <>
@@ -953,9 +1054,9 @@ const App = () => {
                    <TrustDetail trustId={selectedTrustId} onBack={() => { setSelectedTrustId(null); setOraclePrompt(null); }} isPrivileged={isPrivileged} setIsPrivileged={setIsPrivileged} initialOraclePrompt={oraclePrompt} />
                  ) : (
                    <>
-                     {activeTab === 'dashboard' && <Dashboard trusts={trusts} onSelectTrust={setSelectedTrustId} onAnalyzeRisk={handleAnalyzeRisk} onNavigateToTasks={() => setActiveTab('tasks')} />}
+                     {activeTab === 'dashboard' && <Dashboard totalAUM={totalAUM} trusts={trusts} onSelectTrust={setSelectedTrustId} onAnalyzeRisk={handleAnalyzeRisk} onNavigateToTasks={() => setActiveTab('tasks')} />}
                      {activeTab === 'oracle' && <OracleInterface />}
-                     {activeTab === 'inbox' && <ContextInbox emails={INCOMING_EMAILS} />}
+                     {activeTab === 'inbox' && <ContextInbox emails={documents} />}
                      {activeTab === 'meet-me' && <MeetMeRoom isPrivileged={isPrivileged} setIsPrivileged={setIsPrivileged} />}
                      {activeTab === 'trusts' && (<div className="space-y-6"><h2 className="font-serif text-2xl font-bold text-stone-900">My Trusts</h2><div className="grid gap-4">{TRUSTS.map((trust) => (<div key={trust.id} onClick={() => setSelectedTrustId(trust.id)} className="walnut-card cursor-pointer hover:shadow-md"><div className="flex justify-between items-center"><h3 className="font-bold text-stone-800 text-lg font-serif">{trust.name}</h3><span className="text-sm text-stone-500 font-serif">{trust.situs}</span></div></div>))}</div></div>)}
                      {activeTab === 'rolodex' && <VendorRolodex vendors={VENDORS_MOCK} />}
