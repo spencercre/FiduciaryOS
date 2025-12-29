@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Filter, Plus } from 'lucide-react';
 import { TaskCard } from './TaskCard';
 import { NewTaskModal } from './NewTaskModal';
@@ -13,6 +14,8 @@ export function TaskCommandCenter({ tasks, trusts, onMoveTask }) {
     const [filterTrust, setFilterTrust] = useState('all');
     const [newTask, setNewTask] = useState({ title: '', trustId: 1, priority: 'Medium', due: 'Today', status: 'todo' });
     const [isEditing, setIsEditing] = useState(false);
+    const [searchParams] = useSearchParams();
+    const highlightId = searchParams.get('highlight');
 
     useEffect(() => { setLocalTasks(tasks); }, [tasks]);
 
@@ -40,7 +43,7 @@ export function TaskCommandCenter({ tasks, trusts, onMoveTask }) {
         setShowNewTaskModal(true);
     };
 
-    const filteredTasks = localTasks.filter(t => {
+    const filteredTasks = (localTasks || []).filter(t => {
         if (filterPriority !== 'all' && t.priority !== filterPriority) return false;
         if (filterTrust !== 'all' && t.trustId !== parseInt(filterTrust)) return false;
         return true;
@@ -79,7 +82,7 @@ export function TaskCommandCenter({ tasks, trusts, onMoveTask }) {
                 />
             )}
             <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-stone-200 pb-6">
-                <div><h1 className="font-serif text-3xl font-bold text-stone-900">Task Command Center</h1><p className="text-stone-500 font-serif italic">Unified Workflow Across All Trusts</p></div>
+                <div><h1 className="font-serif text-3xl font-bold text-stone-900">Compliance Roadmap</h1><p className="text-stone-500 font-serif italic">Unified Workflow Across All Trusts</p></div>
                 <div className="flex space-x-2 mt-4 md:mt-0">
                     <button onClick={() => setShowFilterModal(true)} className={`flex items-center px-4 py-2 border rounded text-sm font-bold transition ${filterPriority !== 'all' || filterTrust !== 'all' ? 'bg-racing-green text-white border-racing-green' : 'bg-white border-stone-300 text-stone-600 hover:bg-stone-50'}`}>
                         <Filter size={16} className="mr-2"/> Filter {(filterPriority !== 'all' || filterTrust !== 'all') && '•'}
@@ -97,7 +100,18 @@ export function TaskCommandCenter({ tasks, trusts, onMoveTask }) {
                         </h3>
                         <div className="space-y-2">
                             {filteredTasks.filter(t => t.status === col.key).map((task) => (
-                                <TaskCard key={task.id} task={task} getTrustName={getTrustName} onMove={handleMove} />
+                                <div key={task.id} className={String(task.id) === highlightId ? "ring-4 ring-amber-400 rounded-lg animate-pulse" : ""}>
+                                    <TaskCard 
+                                        task={task} 
+                                        getTrustName={getTrustName} 
+                                        onMove={handleMove} 
+                                        onEdit={(t) => {
+                                            setNewTask(t);
+                                            setIsEditing(true);
+                                            setShowNewTaskModal(true);
+                                        }}
+                                    />
+                                </div>
                             ))}
                         </div>
                     </div>

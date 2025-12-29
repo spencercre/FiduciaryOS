@@ -5,6 +5,7 @@ import {
   BookOpen, ClipboardList, FileText, Hourglass, Settings, X 
 } from 'lucide-react';
 import { PrivilegeToggle } from './PrivilegeToggle';
+import { AuditTicker } from './AuditTicker';
 
 export function Sidebar({ 
   isPrivileged, 
@@ -17,15 +18,15 @@ export function Sidebar({
   setIsOpen 
 }) {
   const menuItems = [
-    { id: 'dashboard', label: 'Command Center', icon: Activity, path: '/' },
+    { id: 'command-center', label: 'Command Center', icon: Activity, path: '/' },
     { id: 'inbox', label: 'Context Inbox', icon: Inbox, path: '/inbox' },
     { id: 'trusts', label: 'My Trusts', icon: Briefcase, path: '/trusts' },
     { id: 'oracle', label: 'Fiduciary Mind', icon: BrainCircuit, path: '/oracle' },
     { id: 'meet-me', label: 'Meet-Me Room', icon: Users, path: '/meet-me' },
     { id: 'rolodex', label: 'Rolodex', icon: BookOpen, path: '/rolodex' },
-    { id: 'tasks', label: 'Task Command', icon: ClipboardList, path: '/tasks' },
-    { id: 'documents', label: 'Vault', icon: FileText, path: '/documents' },
-    { id: 'legacy', label: 'Digital Successor', icon: Hourglass, path: '/legacy' },
+    { id: 'compliance-roadmap', label: 'Compliance Roadmap', icon: ClipboardList, path: '/compliance' },
+    { id: 'the-vault', label: 'The Vault', icon: FileText, path: '/vault' },
+    { id: 'succession-protocol', label: 'Succession Protocol', icon: Hourglass, path: '/succession' },
     { id: 'admin', label: 'Admin Console', icon: Settings, path: '/admin', spacer: true }
   ];
 
@@ -68,6 +69,7 @@ export function Sidebar({
           disabled={!canAccessPrivileged} 
           className="w-full justify-between p-3 border-stone-700 bg-stone-900" 
         />
+        <AuditTicker />
       </div>
     </div>
   );

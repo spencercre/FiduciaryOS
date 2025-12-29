@@ -63,6 +63,24 @@ export function Admin() {
     }, 1500);
   };
 
+  const handleTierSelect = (tier) => {
+    setSelectedTier(tier);
+    
+    // Logic: Define feature sets for each tier
+    const features = {
+      standard: ['core'],
+      pro: ['core', 'privilege', 'oracle', 'audit', 'accounting'],
+      dynasty: ['core', 'privilege', 'oracle', 'legacy', 'audit', 'nexus', 'accounting']
+    };
+
+    const activeFeatures = features[tier] || [];
+
+    setModules(prevModules => prevModules.map(mod => ({
+      ...mod,
+      enabled: activeFeatures.includes(mod.id)
+    })));
+  };
+
   return (
     <div className="space-y-8 animate-fadeIn">
        <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-stone-200 pb-6"><div><h1 className="font-serif text-3xl font-bold text-stone-900">Platform Administration</h1><p className="text-stone-500 font-serif italic">Manage Licensing & Active Modules</p></div><div className="px-4 py-2 bg-stone-800 rounded text-white text-sm font-serif flex items-center"><Settings size={16} className="mr-2"/> Administrator Mode</div></div>
@@ -105,7 +123,7 @@ export function Admin() {
          </div>
        </div>
        
-       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">{['standard', 'pro', 'dynasty'].map(tier => (<div key={tier} onClick={() => setSelectedTier(tier)} className={`walnut-card cursor-pointer transition-all ${selectedTier === tier ? 'border-racing-green ring-2 ring-racing-green bg-racing-green-light' : 'opacity-60 hover:opacity-100'}`}><h3 className="font-serif font-bold text-xl text-stone-800 capitalize">{tier}</h3><div className="text-2xl font-bold text-racing-green mb-1">${tier === 'standard' ? 150 : tier === 'pro' ? 250 : 450}<span className="text-sm text-stone-500 font-normal">/mo</span></div></div>))}</div>
+       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">{['standard', 'pro', 'dynasty'].map(tier => (<div key={tier} onClick={() => handleTierSelect(tier)} className={`walnut-card cursor-pointer transition-all ${selectedTier === tier ? 'border-yellow-500 ring-2 ring-yellow-500 bg-stone-50' : 'opacity-60 hover:opacity-100'}`}><h3 className="font-serif font-bold text-xl text-stone-800 capitalize">{tier}</h3><div className="text-2xl font-bold text-racing-green mb-1">${tier === 'standard' ? 150 : tier === 'pro' ? 250 : 450}<span className="text-sm text-stone-500 font-normal">/mo</span></div></div>))}</div>
        
        <div className="walnut-card"><h3 className="font-serif font-bold text-lg text-stone-800 mb-6 border-b border-stone-100 pb-2">Feature Flags</h3>
        <div className="space-y-4">

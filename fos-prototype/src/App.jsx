@@ -11,17 +11,18 @@ import { GlobalTimerBar } from './components/GlobalTimerBar';
 import { MainLayout } from './layouts/MainLayout';
 
 // Pages
-import { Dashboard } from './pages/Dashboard';
+import { CommandCenter } from './pages/CommandCenter';
 import { Trusts } from './pages/Trusts';
 import { TrustDetail } from './pages/TrustDetail';
-import { Tasks } from './pages/Tasks';
-import { Documents } from './pages/Documents';
+import { ComplianceRoadmap } from './pages/ComplianceRoadmap';
+import { TheVault } from './pages/TheVault';
 import { InboxPage } from './pages/Inbox';
 import { Oracle } from './pages/Oracle';
 import { Rolodex } from './pages/Rolodex';
 import { Admin } from './pages/Admin';
-import { Legacy } from './pages/Legacy';
+import { SuccessionProtocol } from './pages/SuccessionProtocol';
 import { MeetMe } from './pages/MeetMe';
+import { AuditLog } from './pages/AuditLog';
 
 // Data
 import { SEED_TASKS, INCOMING_EMAILS, BILLING_ENTRIES, SEED_TRUSTS, VENDORS_MOCK } from './data/mockData';
@@ -102,6 +103,12 @@ const App = () => {
 
   const handleInboxTriage = (emailId, folder) => {
     setEmails((prev) => prev.map((e) => (e.id === emailId ? { ...e, folder } : e)));
+    try {
+      const raw = localStorage.getItem('auditEvents');
+      const list = raw ? JSON.parse(raw) : [];
+      const next = [...list, { id: Date.now(), timestamp: new Date().toISOString(), actor: user?.email || 'system', text: `Email archived to ${folder}` }];
+      localStorage.setItem('auditEvents', JSON.stringify(next.slice(-20)));
+    } catch {}
   };
   
   // GLOBAL TIMER STATE
@@ -124,6 +131,12 @@ const App = () => {
     setGlobalTimerRunning(true);
     setGlobalTimerPaused(false);
     setGlobalTimerTrustName(trustName || '');
+    try {
+      const raw = localStorage.getItem('auditEvents');
+      const list = raw ? JSON.parse(raw) : [];
+      const next = [...list, { id: Date.now(), timestamp: new Date().toISOString(), actor: user?.email || 'system', text: 'Timer started' }];
+      localStorage.setItem('auditEvents', JSON.stringify(next.slice(-20)));
+    } catch {}
   };
   
   const handleGlobalTimerPause = () => setGlobalTimerPaused(true);
@@ -146,6 +159,12 @@ const App = () => {
     setGlobalTimerPaused(false);
     setGlobalTimerSeconds(0);
     setGlobalTimerTrustName('');
+    try {
+      const raw = localStorage.getItem('auditEvents');
+      const list = raw ? JSON.parse(raw) : [];
+      const next = [...list, { id: Date.now(), timestamp: new Date().toISOString(), actor: user?.email || 'system', text: 'Timer stopped and entry recorded' }];
+      localStorage.setItem('auditEvents', JSON.stringify(next.slice(-20)));
+    } catch {}
   };
   
   const handleGlobalTimerDiscard = () => {
@@ -165,6 +184,14 @@ const App = () => {
     const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
       setUser(currentUser);
       setAuthLoading(false);
+      if (currentUser) {
+        try {
+          const raw = localStorage.getItem('auditEvents');
+          const list = raw ? JSON.parse(raw) : [];
+          const next = [...list, { id: Date.now(), timestamp: new Date().toISOString(), actor: currentUser.email || 'user', text: 'User logged in' }];
+          localStorage.setItem('auditEvents', JSON.stringify(next.slice(-20)));
+        } catch {}
+      }
     });
 
     const init = async () => {
@@ -234,7 +261,7 @@ const App = () => {
             setIsOpen={setIsOpen} 
           />
         }>
-          <Route index element={<Dashboard onAnalyzeRisk={handleAnalyzeRisk} />} />
+          <Route index element={<CommandCenter onAnalyzeRisk={handleAnalyzeRisk} />} />
           <Route path="inbox" element={<InboxPage emails={emails} trusts={trustsForUi} canAccessPrivileged={canAccessPrivileged} onTriage={handleInboxTriage} />} />
           <Route path="trusts" element={<Trusts trusts={trustsForUi} />} />
           <Route path="trusts/:id" element={
@@ -258,10 +285,11 @@ const App = () => {
           <Route path="oracle" element={<Oracle initialPrompt={oraclePrompt} />} />
           <Route path="meet-me" element={<MeetMe isPrivileged={effectiveIsPrivileged} />} />
           <Route path="rolodex" element={<Rolodex vendors={VENDORS_MOCK} trusts={trustsForUi} />} />
-          <Route path="tasks" element={<Tasks tasks={tasks} trusts={trustsForUi} onMoveTask={()=>{}} />} />
-          <Route path="documents" element={<Documents />} />
-          <Route path="legacy" element={effectiveIsPrivileged ? <Legacy /> : <Navigate to="/dashboard" replace />} />
-          <Route path="admin" element={effectiveIsPrivileged ? <Admin /> : <Navigate to="/dashboard" replace />} />
+          <Route path="compliance" element={<ComplianceRoadmap tasks={tasks} trusts={trustsForUi} onMoveTask={()=>{}} />} />
+          <Route path="vault" element={<TheVault />} />
+          <Route path="succession" element={effectiveIsPrivileged ? <SuccessionProtocol /> : <Navigate to="/" replace />} />
+          <Route path="admin" element={effectiveIsPrivileged ? <Admin /> : <Navigate to="/" replace />} />
+          <Route path="audit-log" element={<AuditLog />} />
         </Route>
       </Routes>
       

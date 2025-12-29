@@ -1,8 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { Inbox, CheckCircle, ArrowRight, FileArchive, Shield } from 'lucide-react';
 
 export function InboxPage({ emails, trusts, canAccessPrivileged, onTriage }) {
   const [selectedEmailId, setSelectedEmailId] = useState(null);
+  const [searchParams] = useSearchParams();
+  const highlightMode = searchParams.get('highlight');
+
+  useEffect(() => {
+    if (highlightMode === 'hostile') {
+      // Find the first "Hostile" email (mock logic: finding Greg's email)
+      const hostileEmail = emails.find(e => e.sender.includes('greg'));
+      if (hostileEmail) {
+        setSelectedEmailId(hostileEmail.id);
+        // Scroll logic would go here if we had refs
+      }
+    }
+  }, [highlightMode, emails]);
 
   const visibleFolders = canAccessPrivileged ? ['quarantine', 'public', 'privileged'] : ['public'];
   const streamFolder = canAccessPrivileged ? 'quarantine' : 'public';
@@ -34,11 +48,17 @@ export function InboxPage({ emails, trusts, canAccessPrivileged, onTriage }) {
               <p className="font-serif">All caught up!</p>
             </div>
           ) : (
-            streamEmails.map((email) => (
+            streamEmails.map((email) => {
+              const isHighlighted = highlightMode === 'hostile' && email.sender.includes('greg');
+              return (
               <div
                 key={email.id}
                 onClick={() => setSelectedEmailId(email.id)}
-                className={`p-4 border-b border-stone-100 cursor-pointer hover:bg-stone-50 transition-colors ${selectedEmailId === email.id ? 'bg-racing-green-light border-l-4 border-racing-green' : ''}`}
+                className={`p-4 border-b border-stone-100 cursor-pointer hover:bg-stone-50 transition-all duration-1000 ${
+                    selectedEmailId === email.id ? 'bg-racing-green-light border-l-4 border-racing-green' : ''
+                } ${
+                    isHighlighted ? 'bg-amber-100 ring-2 ring-amber-400 animate-pulse' : ''
+                }`}
               >
                 <div className="flex justify-between items-start mb-1">
                   <span className="font-bold text-stone-800 truncate w-2/3 font-serif">{email.sender}</span>
@@ -47,7 +67,7 @@ export function InboxPage({ emails, trusts, canAccessPrivileged, onTriage }) {
                 <p className="text-sm font-medium text-stone-600 truncate mb-1 font-serif">{email.subject}</p>
                 <p className="text-xs text-stone-400 font-serif italic">{getTrustName(email.trustId)}</p>
               </div>
-            ))
+            )})
           )}
         </div>
       </div>

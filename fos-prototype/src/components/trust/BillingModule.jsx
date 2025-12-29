@@ -162,12 +162,12 @@ export function BillingModule({
                     <h3 className="text-sm font-bold text-stone-500 uppercase tracking-widest mb-4">Fiduciary Timekeeper</h3>
                     <div className="text-5xl font-mono text-stone-800 mb-6 font-bold">{formatTime(globalTimerSeconds)}</div>
                     <div className="w-full space-y-2">
-                        <button onClick={handleTimerToggle} className={`w-full py-3 rounded font-bold flex items-center justify-center transition-all ${
+                        <button onClick={handleTimerToggle} className={`w-full py-3 rounded font-bold flex items-center justify-center transition-all shadow-md ${
                             globalTimerRunning && !globalTimerPaused 
                                 ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200' 
                                 : globalTimerRunning && globalTimerPaused
                                 ? 'bg-green-100 text-green-700 hover:bg-green-200'
-                                : 'bg-racing-green text-white hover:bg-stone-800'
+                                : 'bg-[#059669] text-white hover:bg-[#047857]' // Solid Emerald Green + Darker Hover
                         }`}>
                             {globalTimerRunning && !globalTimerPaused ? (
                                 <><Pause size={18} className="mr-2"/> PAUSE</>
