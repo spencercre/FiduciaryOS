@@ -1,0 +1,82 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function trustDoc(trustId) {
+      return get(/databases/$(database)/documents/trusts/$(trustId));
+    }
+
+    function isFiduciary(trustId) {
+      return signedIn() && trustDoc(trustId).data.fiduciary_uid == request.auth.uid;
+    }
+
+    function isAttorney(trustId) {
+      return signedIn()
+        && trustDoc(trustId).data.attorney_uids != null
+        && request.auth.uid in trustDoc(trustId).data.attorney_uids;
+    }
+
+    function isCpa(trustId) {
+      return signedIn()
+        && trustDoc(trustId).data.cpa_uids != null
+        && request.auth.uid in trustDoc(trustId).data.cpa_uids;
+    }
+
+    function isBeneficiary(trustId) {
+      return signedIn()
+        && trustDoc(trustId).data.beneficiary_uids != null
+        && request.auth.uid in trustDoc(trustId).data.beneficiary_uids;
+    }
+
+    function isTrustMember(trustId) {
+      return isFiduciary(trustId) || isAttorney(trustId) || isCpa(trustId) || isBeneficiary(trustId);
+    }
+
+    function privilegedMember(trustId) {
+      return isFiduciary(trustId) || isAttorney(trustId);
+    }
+
+    match /trusts/{trustId} {
+      allow create: if signedIn() && request.resource.data.fiduciary_uid == request.auth.uid;
+      allow read: if isTrustMember(trustId);
+      allow update, delete: if isFiduciary(trustId);
+
+      match /public/{docId} {
+        allow read: if isTrustMember(trustId);
+        allow create, update, delete: if isFiduciary(trustId) || isAttorney(trustId) || isCpa(trustId);
+      }
+
+      match /privileged/{docId} {
+        allow read: if privilegedMember(trustId);
+        allow create, update, delete: if privilegedMember(trustId);
+      }
+
+      match /inbox/{emailId} {
+        allow create: if privilegedMember(trustId) && request.resource.data.folder == 'quarantine';
+        allow read: if isTrustMember(trustId)
+          && (
+            (resource.data.folder == 'public')
+            || (resource.data.folder == 'privileged' && privilegedMember(trustId))
+            || (resource.data.folder == 'quarantine' && privilegedMember(trustId))
+          );
+        allow update, delete: if privilegedMember(trustId);
+      }
+
+      match /ledger/{entryId} {
+        allow read: if isTrustMember(trustId);
+        allow create, update, delete: if isFiduciary(trustId) || isCpa(trustId);
+      }
+    }
+
+    match /documents/{docId} {
+      allow read, write: if false;
+    }
+
+    match /audit_logs/{logId} {
+      allow read, write: if false;
+    }
+  }
+}

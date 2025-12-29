@@ -1,0 +1,65 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function trustDoc(trustId) {
+      return firestore.get(/databases/(default)/documents/trusts/$(trustId));
+    }
+
+    function isFiduciary(trustId) {
+      return signedIn() && trustDoc(trustId).data.fiduciary_uid == request.auth.uid;
+    }
+
+    function isAttorney(trustId) {
+      return signedIn()
+        && trustDoc(trustId).data.attorney_uids != null
+        && request.auth.uid in trustDoc(trustId).data.attorney_uids;
+    }
+
+    function isCpa(trustId) {
+      return signedIn()
+        && trustDoc(trustId).data.cpa_uids != null
+        && request.auth.uid in trustDoc(trustId).data.cpa_uids;
+    }
+
+    function isBeneficiary(trustId) {
+      return signedIn()
+        && trustDoc(trustId).data.beneficiary_uids != null
+        && request.auth.uid in trustDoc(trustId).data.beneficiary_uids;
+    }
+
+    function isTrustMember(trustId) {
+      return isFiduciary(trustId) || isAttorney(trustId) || isCpa(trustId) || isBeneficiary(trustId);
+    }
+
+    function privilegedMember(trustId) {
+      return isFiduciary(trustId)
+        || (signedIn()
+          && trustDoc(trustId).data.attorney_uids != null
+          && request.auth.uid in trustDoc(trustId).data.attorney_uids);
+    }
+
+    match /trusts/{trustId}/public/{fileName} {
+      allow read: if isTrustMember(trustId);
+      allow write: if isFiduciary(trustId);
+    }
+
+    match /trusts/{trustId}/privileged/{fileName} {
+      allow read: if privilegedMember(trustId);
+      allow write: if privilegedMember(trustId)
+        && request.resource.metadata.keys().hasAll(['tags', 'description'])
+        && request.resource.metadata.tags.size() > 0
+        && request.resource.metadata.description.size() > 0;
+    }
+
+    match /trusts/{trustId}/legacy_protocol/{fileName} {
+      allow read: if signedIn()
+        && (trustDoc(trustId).data.status == 'incapacitated' || trustDoc(trustId).data.status == 'incapacity_review')
+        && trustDoc(trustId).data.successor_uid == request.auth.uid;
+      allow write: if isFiduciary(trustId);
+    }
+  }
+}
