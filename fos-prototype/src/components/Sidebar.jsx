@@ -2,7 +2,7 @@ import React from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
   Shield, Activity, Inbox, Briefcase, BrainCircuit, Users, 
-  BookOpen, ClipboardList, FileText, Hourglass, Settings, X 
+  BookOpen, ClipboardList, FileText, Hourglass, Settings, X, LogOut 
 } from 'lucide-react';
 import { PrivilegeToggle } from './PrivilegeToggle';
 import { AuditTicker } from './AuditTicker';
@@ -15,19 +15,21 @@ export function Sidebar({
   untriagedCount, 
   isMobile, 
   isOpen, 
-  setIsOpen 
+  setIsOpen,
+  onLogout,
+  isAuthenticated
 }) {
   const menuItems = [
-    { id: 'command-center', label: 'Command Center', icon: Activity, path: '/' },
-    { id: 'inbox', label: 'Context Inbox', icon: Inbox, path: '/inbox' },
-    { id: 'trusts', label: 'My Trusts', icon: Briefcase, path: '/trusts' },
-    { id: 'oracle', label: 'Fiduciary Mind', icon: BrainCircuit, path: '/oracle' },
-    { id: 'meet-me', label: 'Meet-Me Room', icon: Users, path: '/meet-me' },
-    { id: 'rolodex', label: 'Rolodex', icon: BookOpen, path: '/rolodex' },
-    { id: 'compliance-roadmap', label: 'Compliance Roadmap', icon: ClipboardList, path: '/compliance' },
-    { id: 'the-vault', label: 'The Vault', icon: FileText, path: '/vault' },
-    { id: 'succession-protocol', label: 'Succession Protocol', icon: Hourglass, path: '/succession' },
-    { id: 'admin', label: 'Admin Console', icon: Settings, path: '/admin', spacer: true }
+    { id: 'command-center', label: 'Command Center', icon: Activity, path: '/app', end: true },
+    { id: 'inbox', label: 'Context Inbox', icon: Inbox, path: '/app/inbox' },
+    { id: 'trusts', label: 'My Trusts', icon: Briefcase, path: '/app/trusts' },
+    { id: 'oracle', label: 'Fiduciary Mind', icon: BrainCircuit, path: '/app/oracle' },
+    { id: 'meet-me', label: 'Meet-Me Room', icon: Users, path: '/app/meet-me' },
+    { id: 'rolodex', label: 'Rolodex', icon: BookOpen, path: '/app/rolodex' },
+    { id: 'compliance-roadmap', label: 'Compliance Roadmap', icon: ClipboardList, path: '/app/compliance' },
+    { id: 'the-vault', label: 'The Vault', icon: FileText, path: '/app/vault' },
+    { id: 'succession-protocol', label: 'Succession Protocol', icon: Hourglass, path: '/app/succession' },
+    { id: 'admin', label: 'Admin Console', icon: Settings, path: '/app/admin', spacer: true }
   ];
 
   return (
@@ -46,6 +48,7 @@ export function Sidebar({
             {item.spacer && <div className="h-px bg-stone-800 my-4"></div>}
             <NavLink 
               to={item.path} 
+              end={!!item.end}
               onClick={() => isMobile && setIsOpen(false)}
               className={({ isActive }) => `w-full flex items-center space-x-3 px-4 py-3 rounded-md transition-all duration-200 sidebar-link ${isActive ? 'active bg-racing-green text-white shadow-md' : 'text-stone-400 hover:bg-stone-800 hover:text-stone-100'}`}
             >
@@ -70,6 +73,18 @@ export function Sidebar({
           className="w-full justify-between p-3 border-stone-700 bg-stone-900" 
         />
         <AuditTicker />
+
+        {isAuthenticated && (
+          <div className="mt-4 pt-4 border-t border-stone-800">
+            <button 
+              onClick={onLogout}
+              className="w-full flex items-center space-x-3 px-4 py-2 text-stone-500 hover:text-red-400 hover:bg-stone-900 rounded transition-colors text-sm"
+            >
+              <LogOut size={16} />
+              <span className="font-serif font-bold">Sign Out</span>
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

@@ -12,7 +12,7 @@ export function Trusts({ trusts }) {
             <h2 className="font-serif text-2xl font-bold text-stone-900">My Trusts</h2>
             <div className="grid gap-4">
                 {displayTrusts.map((trust) => (
-                    <div key={trust.id} onClick={() => navigate(`/trusts/${trust.id}`)} className="walnut-card cursor-pointer hover:shadow-md">
+                    <div key={trust.id} onClick={() => navigate(`/app/trusts/${trust.id}`)} className="walnut-card cursor-pointer hover:shadow-md">
                         <div className="flex justify-between items-center">
                             <div className="flex items-center">
                                 <h3 className="font-bold text-stone-800 text-lg font-serif">{trust.name}</h3>

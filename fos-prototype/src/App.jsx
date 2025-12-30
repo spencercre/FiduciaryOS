@@ -1,16 +1,17 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Loader, Shield } from 'lucide-react';
+import { Loader } from 'lucide-react';
 import { auth, db } from './services/firebase';
-import { signInWithPopup, GoogleAuthProvider, onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged } from 'firebase/auth';
 import { collection, getDocs } from 'firebase/firestore';
 
-// Components
 import { GlobalStyles } from './components/GlobalStyles';
 import { GlobalTimerBar } from './components/GlobalTimerBar';
 import { MainLayout } from './layouts/MainLayout';
 
-// Pages
+import { Login } from './pages/Login';
+import { GetStarted } from './pages/GetStarted';
+import LandingPage from './pages/LandingPage';
 import { CommandCenter } from './pages/CommandCenter';
 import { Trusts } from './pages/Trusts';
 import { TrustDetail } from './pages/TrustDetail';
@@ -24,50 +25,9 @@ import { SuccessionProtocol } from './pages/SuccessionProtocol';
 import { MeetMe } from './pages/MeetMe';
 import { AuditLog } from './pages/AuditLog';
 
-// Data
 import { SEED_TASKS, INCOMING_EMAILS, BILLING_ENTRIES, SEED_TRUSTS, VENDORS_MOCK } from './data/mockData';
 
-// Login Screen
-const LoginScreen = () => {
-  const handleLogin = async () => {
-    const provider = new GoogleAuthProvider();
-    try {
-      await signInWithPopup(auth, provider);
-    } catch (error) {
-      console.error("Login failed", error);
-      alert("Login failed: " + error.message);
-    }
-  };
-
-  return (
-    <>
-      <GlobalStyles />
-      <div className="min-h-screen bg-stone-50 flex flex-col items-center justify-center p-4">
-        <div className="walnut-card max-w-md w-full p-8 text-center shadow-xl border-t-4 border-racing-green">
-           <div className="flex justify-center mb-6">
-              <div className="w-16 h-16 bg-racing-green rounded-full flex items-center justify-center">
-                 <Shield className="text-white h-8 w-8" />
-              </div>
-           </div>
-           <h1 className="font-serif text-3xl font-bold text-stone-900 mb-2">Fiduciary OS</h1>
-           <p className="text-stone-500 font-serif italic mb-8">Secure Trust Administration System</p>
-           
-           <button 
-             onClick={handleLogin}
-             className="w-full py-3 px-4 bg-white border border-stone-300 rounded shadow-sm text-stone-700 font-bold font-sans hover:bg-stone-50 transition-all flex items-center justify-center"
-           >
-             <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" className="w-5 h-5 mr-3" />
-             Sign in with Google
-           </button>
-           
-           <p className="mt-6 text-xs text-stone-400">Restricted Access. Authorized Fiduciaries Only.</p>
-        </div>
-      </div>
-    </>
-  );
-};
-
-const App = () => {
+const AppShell = ({ user, isDemoMode, isAuthenticated, onLogout }) => {
   const [isPrivileged, setIsPrivileged] = useState(true);
   const [isMobile, setIsMobile] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -77,12 +37,13 @@ const App = () => {
   const [trusts, setTrusts] = useState([]);
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true);
+  
+  const currentUser = user || (isDemoMode ? { email: 'demo@fiduciary.os', uid: 'demo-user' } : null);
+
   const trustsForUi = trusts.length ? trusts : SEED_TRUSTS;
   
   const activeRole = useMemo(() => {
-    const email = (user?.email || "").toLowerCase();
+    const email = (currentUser?.email || "").toLowerCase();
     const baseRole =
       email.includes("jenkins") || email.includes("attorney") ? "attorney" :
       email.includes("vance") || email.includes("cpa") ? "cpa" :
@@ -90,7 +51,7 @@ const App = () => {
       "fiduciary";
 
     return baseRole;
-  }, [user]);
+  }, [currentUser]);
   
   const canAccessPrivileged = activeRole === 'fiduciary' || activeRole === 'attorney';
   const untriagedCount = useMemo(
@@ -98,7 +59,6 @@ const App = () => {
     [emails]
   );
   const privilegeLocked = canAccessPrivileged && untriagedCount > 0;
-  // FIXED: Removed !privilegeLocked constraint to allow full navigation during demo
   const effectiveIsPrivileged = canAccessPrivileged && isPrivileged;
 
   const handleInboxTriage = (emailId, folder) => {
@@ -106,9 +66,11 @@ const App = () => {
     try {
       const raw = localStorage.getItem('auditEvents');
       const list = raw ? JSON.parse(raw) : [];
-      const next = [...list, { id: Date.now(), timestamp: new Date().toISOString(), actor: user?.email || 'system', text: `Email archived to ${folder}` }];
+      const next = [...list, { id: Date.now(), timestamp: new Date().toISOString(), actor: currentUser?.email || 'system', text: `Email archived to ${folder}` }];
       localStorage.setItem('auditEvents', JSON.stringify(next.slice(-20)));
-    } catch {}
+    } catch (e) {
+      void e;
+    }
   };
   
   // GLOBAL TIMER STATE
@@ -134,9 +96,11 @@ const App = () => {
     try {
       const raw = localStorage.getItem('auditEvents');
       const list = raw ? JSON.parse(raw) : [];
-      const next = [...list, { id: Date.now(), timestamp: new Date().toISOString(), actor: user?.email || 'system', text: 'Timer started' }];
+      const next = [...list, { id: Date.now(), timestamp: new Date().toISOString(), actor: currentUser?.email || 'system', text: 'Timer started' }];
       localStorage.setItem('auditEvents', JSON.stringify(next.slice(-20)));
-    } catch {}
+    } catch (e) {
+      void e;
+    }
   };
   
   const handleGlobalTimerPause = () => setGlobalTimerPaused(true);
@@ -162,9 +126,11 @@ const App = () => {
     try {
       const raw = localStorage.getItem('auditEvents');
       const list = raw ? JSON.parse(raw) : [];
-      const next = [...list, { id: Date.now(), timestamp: new Date().toISOString(), actor: user?.email || 'system', text: 'Timer stopped and entry recorded' }];
+      const next = [...list, { id: Date.now(), timestamp: new Date().toISOString(), actor: currentUser?.email || 'system', text: 'Timer stopped and entry recorded' }];
       localStorage.setItem('auditEvents', JSON.stringify(next.slice(-20)));
-    } catch {}
+    } catch (e) {
+      void e;
+    }
   };
   
   const handleGlobalTimerDiscard = () => {
@@ -181,19 +147,6 @@ const App = () => {
   };
 
   useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setAuthLoading(false);
-      if (currentUser) {
-        try {
-          const raw = localStorage.getItem('auditEvents');
-          const list = raw ? JSON.parse(raw) : [];
-          const next = [...list, { id: Date.now(), timestamp: new Date().toISOString(), actor: currentUser.email || 'user', text: 'User logged in' }];
-          localStorage.setItem('auditEvents', JSON.stringify(next.slice(-20)));
-        } catch {}
-      }
-    });
-
     const init = async () => {
       const handleResize = () => { setIsMobile(window.innerWidth < 1024); if (window.innerWidth >= 1024) setIsOpen(false); };
       handleResize();
@@ -213,19 +166,7 @@ const App = () => {
                 const data = doc.data();
                 loadedTrusts.push({
                     id: doc.id,
-                    name: data.name || "Unnamed Trust",
-                    situs: data.situs || "Unknown",
-                    assets: Number(data.assets || 0),
-                    fiduciaryUid: data.fiduciary_uid || "",
-                    beneficiaryUids: data.beneficiary_uids || [],
-                    attorneyUids: data.attorney_uids || [],
-                    cpaUids: data.cpa_uids || [],
-                    type: data.type || "Trust",
-                    status: data.status || "active",
-                    progress: 0,
-                    nextTask: "Review",
-                    ein: data.ein || "",
-                    dateOfDeath: data.date_of_death || "N/A"
+                    ...data
                 });
             });
             setTrusts(loadedTrusts);
@@ -234,22 +175,17 @@ const App = () => {
         }
     };
 
-    if (user) {
+    if (currentUser) {
         fetchTrustsData();
     }
+  }, [currentUser]);
 
-    return () => unsubscribeAuth();
-  }, [user]);
-
-  if (authLoading || loading) return <div className="h-screen flex items-center justify-center bg-stone-50 font-serif text-racing-green"><Loader className="animate-spin mr-2"/> Loading Fiduciary OS...</div>;
-
-  if (!user) return <LoginScreen />;
+  if (loading) return <div className="h-screen flex items-center justify-center bg-stone-50 font-serif text-racing-green"><Loader className="animate-spin mr-2"/> Loading Fiduciary OS...</div>;
 
   return (
-    <Router>
-      <GlobalStyles />
+    <>
       <Routes>
-        <Route path="/" element={
+        <Route element={
           <MainLayout 
             isPrivileged={effectiveIsPrivileged} 
             setIsPrivileged={setIsPrivileged} 
@@ -259,6 +195,9 @@ const App = () => {
             isMobile={isMobile} 
             isOpen={isOpen} 
             setIsOpen={setIsOpen} 
+            currentUser={currentUser}
+            onLogout={onLogout}
+            isAuthenticated={isAuthenticated}
           />
         }>
           <Route index element={<CommandCenter onAnalyzeRisk={handleAnalyzeRisk} />} />
@@ -287,8 +226,8 @@ const App = () => {
           <Route path="rolodex" element={<Rolodex vendors={VENDORS_MOCK} trusts={trustsForUi} />} />
           <Route path="compliance" element={<ComplianceRoadmap tasks={tasks} trusts={trustsForUi} onMoveTask={()=>{}} />} />
           <Route path="vault" element={<TheVault />} />
-          <Route path="succession" element={effectiveIsPrivileged ? <SuccessionProtocol /> : <Navigate to="/" replace />} />
-          <Route path="admin" element={effectiveIsPrivileged ? <Admin /> : <Navigate to="/" replace />} />
+          <Route path="succession" element={effectiveIsPrivileged ? <SuccessionProtocol /> : <Navigate to="/app" replace />} />
+          <Route path="admin" element={effectiveIsPrivileged ? <Admin /> : <Navigate to="/app" replace />} />
           <Route path="audit-log" element={<AuditLog />} />
         </Route>
       </Routes>
@@ -303,6 +242,64 @@ const App = () => {
         onStop={handleGlobalTimerStop}
         onDiscard={handleGlobalTimerDiscard}
       />
+    </>
+  );
+};
+
+const App = () => {
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [isDemoMode, setIsDemoMode] = useState(false);
+
+  useEffect(() => {
+    const checkDemoAuth = () => {
+      const demoAuth = localStorage.getItem('fos_demo_auth');
+      if (demoAuth === 'true') setIsDemoMode(true);
+    };
+    checkDemoAuth();
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+      setUser(currentUser);
+      setAuthLoading(false);
+    });
+
+    return () => unsubscribeAuth();
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      const demoAuth = localStorage.getItem('fos_demo_auth');
+      if (demoAuth === 'true' && !isDemoMode) setIsDemoMode(true);
+      if (!demoAuth && isDemoMode) setIsDemoMode(false);
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isDemoMode]);
+
+  if (authLoading && !isDemoMode) return <div className="h-screen flex items-center justify-center bg-stone-50 font-serif text-racing-green"><Loader className="animate-spin mr-2"/> Initializing...</div>;
+
+  const isAuthenticated = !!user || isDemoMode;
+
+  const handleLogout = async () => {
+    try {
+      await auth.signOut();
+      localStorage.removeItem('fos_demo_auth');
+      setIsDemoMode(false);
+      setUser(null);
+    } catch (error) {
+      console.error('Logout error', error);
+    }
+  };
+
+  return (
+    <Router>
+      <GlobalStyles />
+      <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/get-started" element={<GetStarted />} />
+        <Route path="/app/*" element={<AppShell user={user} isDemoMode={isDemoMode} isAuthenticated={isAuthenticated} onLogout={handleLogout} />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
     </Router>
   );
 };

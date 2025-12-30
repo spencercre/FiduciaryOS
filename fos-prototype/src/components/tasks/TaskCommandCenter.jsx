@@ -37,12 +37,6 @@ export function TaskCommandCenter({ tasks, trusts, onMoveTask }) {
         setShowNewTaskModal(false);
     };
 
-    const handleEditTask = (task) => {
-        setNewTask(task);
-        setIsEditing(true);
-        setShowNewTaskModal(true);
-    };
-
     const filteredTasks = (localTasks || []).filter(t => {
         if (filterPriority !== 'all' && t.priority !== filterPriority) return false;
         if (filterTrust !== 'all' && t.trustId !== parseInt(filterTrust)) return false;

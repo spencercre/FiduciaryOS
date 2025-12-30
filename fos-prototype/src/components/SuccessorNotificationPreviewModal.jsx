@@ -1,7 +1,15 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { X, MessageSquare } from 'lucide-react';
 
 export function SuccessorNotificationPreviewModal({ kind, onClose }) {
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [onClose]);
+
   const previews = {
     '7day': {
       title: '7-Day Reminder (Email Only)',
@@ -70,8 +78,8 @@ If you need emergency assistance, call: (800) 555-0199
   if (!preview) return null;
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-[1000] flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl">
+    <div className="fixed inset-0 bg-black/50 z-[1000] flex items-center justify-center p-4" onClick={onClose}>
+      <div className="bg-white rounded-lg w-full max-w-2xl max-h-[90vh] overflow-hidden shadow-2xl" onClick={(e) => e.stopPropagation()}>
         <div className={`p-4 border-b flex justify-between items-center ${
           kind === 'dayof' ? 'bg-red-600 text-white' :
           kind === '3day' ? 'bg-orange-500 text-white' :

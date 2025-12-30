@@ -6,7 +6,6 @@ import { SEED_TRUSTS, SEED_TASKS, INCOMING_EMAILS } from '../data/mockData';
 
 export function CommandCenter({ onAnalyzeRisk }) {
     const navigate = useNavigate();
-    const formatCurrency = (amount) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(amount);
     const displayTrusts = SEED_TRUSTS;
     
     // --- RISK RADAR LOGIC ---
@@ -17,21 +16,12 @@ export function CommandCenter({ onAnalyzeRisk }) {
     // 2. Beneficiary Sentiment (Mock Logic)
     const sentimentScore = 42; // Hostile (< 50)
     const sentimentStatus = sentimentScore < 50 ? 'Hostile' : sentimentScore < 80 ? 'Neutral' : 'Positive';
-    // Secondary insights: last-7-days hostility sparkline + trigger sources
     const last7Days = Array.from({ length: 7 }).map((_, i) => {
         const d = new Date();
         d.setDate(d.getDate() - (6 - i));
         return d.toISOString().slice(0, 10);
     });
-    const hostilityByDay = last7Days.map(day =>
-        INCOMING_EMAILS.filter(e => (e.date || '').includes(day) || day === new Date().toISOString().slice(0,10))
-            .filter(e => String(e.sender).toLowerCase().includes('greg') || e.classification === 'needs_review')
-            .length
-    );
-    const triggerCounts = INCOMING_EMAILS
-        .filter(e => String(e.sender).toLowerCase().includes('greg') || e.classification === 'needs_review')
-        .reduce((acc, e) => { const k = (e.sender || 'Unknown'); acc[k] = (acc[k] || 0) + 1; return acc; }, {});
-    const topTriggers = Object.entries(triggerCounts).sort((a,b)=>b[1]-a[1]).slice(0,3);
+    void last7Days;
     
     // 3. The Iron Key (Countdown)
     const [timeLeft, setTimeLeft] = useState({ days: 28, hours: 14, mins: 32 });
@@ -48,7 +38,7 @@ export function CommandCenter({ onAnalyzeRisk }) {
     }, []);
 
     const handleTrustClick = (id) => {
-        navigate(`/trusts/${id}`);
+        navigate(`/app/trusts/${id}`);
     };
 
     return (
@@ -71,7 +61,7 @@ export function CommandCenter({ onAnalyzeRisk }) {
                         const isUrgent = task.priority === "High";
                         
                         return (
-                            <div key={task.id} role="button" onClick={() => navigate(`/compliance?highlight=${task.id}`)} className="flex items-center justify-between p-2 rounded-lg border border-stone-100 hover:bg-stone-50 hover:border-stone-200 cursor-pointer transition-colors group">
+                            <div key={task.id} role="button" onClick={() => navigate(`/app/compliance?highlight=${task.id}`)} className="flex items-center justify-between p-2 rounded-lg border border-stone-100 hover:bg-stone-50 hover:border-stone-200 cursor-pointer transition-colors group">
                                 <div className="flex items-start space-x-3">
                                     <div className={`mt-1 w-2 h-2 rounded-full ${isOverdue ? 'bg-red-600 animate-pulse' : isUrgent ? 'bg-orange-500' : 'bg-stone-300'}`}></div>
                                     <div>
@@ -93,7 +83,7 @@ export function CommandCenter({ onAnalyzeRisk }) {
                     })}
                 </div>
                 <div className="p-2 bg-stone-50 border-t border-stone-100 text-center">
-                    <button onClick={() => navigate('/compliance')} className="text-xs font-bold text-stone-500 hover:text-racing-green uppercase tracking-wider flex items-center justify-center w-full">
+                    <button onClick={() => navigate('/app/compliance')} className="text-xs font-bold text-stone-500 hover:text-racing-green uppercase tracking-wider flex items-center justify-center w-full">
                         View All Deadlines <ChevronRight size={12} className="ml-1"/>
                     </button>
                 </div>
@@ -129,7 +119,7 @@ export function CommandCenter({ onAnalyzeRisk }) {
                     </div>
 
                     {sentimentStatus === 'Hostile' && (
-                        <button onClick={() => navigate('/inbox?highlight=hostile')} className="flex items-center px-3 py-1.5 bg-red-100 text-red-700 border border-red-200 rounded-full font-bold text-xs hover:bg-red-200 transition-colors animate-pulse">
+                        <button onClick={() => navigate('/app/inbox?highlight=hostile')} className="flex items-center px-3 py-1.5 bg-red-100 text-red-700 border border-red-200 rounded-full font-bold text-xs hover:bg-red-200 transition-colors animate-pulse">
                             <AlertCircle size={14} className="mr-2"/> Review Hostile Correspondence
                         </button>
                     )}
@@ -188,7 +178,7 @@ export function CommandCenter({ onAnalyzeRisk }) {
                                 </div>
                             );
                         })()}
-                        <button onClick={() => navigate('/succession')} className="w-full py-2 bg-yellow-600 hover:bg-yellow-500 text-stone-900 font-bold rounded uppercase tracking-wider text-xs transition-colors">
+                        <button onClick={() => navigate('/app/succession')} className="w-full py-2 bg-yellow-600 hover:bg-yellow-500 text-stone-900 font-bold rounded uppercase tracking-wider text-xs transition-colors">
                             Manage Protocols
                         </button>
                     </div>

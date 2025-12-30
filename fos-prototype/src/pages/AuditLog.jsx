@@ -1,18 +1,30 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 import { Lock } from 'lucide-react';
 
 export function AuditLog() {
-  const [events, setEvents] = useState([]);
-
-  useEffect(() => {
+  const [events] = useState(() => {
     try {
       const raw = localStorage.getItem('auditEvents');
       const parsed = raw ? JSON.parse(raw) : [];
-      setEvents(Array.isArray(parsed) ? parsed.slice(-500).reverse() : []);
+      if (Array.isArray(parsed) && parsed.length) return parsed.slice(-500).reverse();
+
+      const now = Date.now();
+      const actor = localStorage.getItem('fos_demo_auth') === 'true' ? 'demo@fiduciary.os' : 'system';
+      const seed = [
+        { id: now - 7 * 60_000, timestamp: new Date(now - 7 * 60_000).toISOString(), actor, text: 'User session started' },
+        { id: now - 6 * 60_000, timestamp: new Date(now - 6 * 60_000).toISOString(), actor, text: 'Demo mode enabled' },
+        { id: now - 5 * 60_000, timestamp: new Date(now - 5 * 60_000).toISOString(), actor, text: 'Context Inbox triaged: privileged quarantine reviewed' },
+        { id: now - 4 * 60_000, timestamp: new Date(now - 4 * 60_000).toISOString(), actor, text: 'Timer started' },
+        { id: now - 3 * 60_000, timestamp: new Date(now - 3 * 60_000).toISOString(), actor, text: 'Timer stopped and entry recorded' },
+        { id: now - 2 * 60_000, timestamp: new Date(now - 2 * 60_000).toISOString(), actor, text: 'Vault artifact indexed' },
+        { id: now - 1 * 60_000, timestamp: new Date(now - 1 * 60_000).toISOString(), actor, text: 'Compliance roadmap updated' }
+      ];
+      localStorage.setItem('auditEvents', JSON.stringify(seed));
+      return seed.slice(-500).reverse();
     } catch {
-      setEvents([]);
+      return [];
     }
-  }, []);
+  });
 
   const formatTs = (ts) => {
     if (!ts) return '—';
@@ -47,7 +59,9 @@ export function AuditLog() {
                 a.download = 'audit-log.csv';
                 a.click();
                 URL.revokeObjectURL(url);
-              } catch {}
+              } catch (e) {
+                void e;
+              }
             }}
             className="px-4 py-2 bg-stone-800 text-white rounded font-bold text-sm shadow-md"
           >

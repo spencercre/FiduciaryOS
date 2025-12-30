@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Clock, BadgeCheck, ChevronUp, ChevronDown } from 'lucide-react';
 
 export const TaskCard = ({ task, getTrustName, onMove, onEdit }) => {

@@ -1,9 +1,17 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 export const FilterModal = ({ onClose, onApply, onClear, filterPriority, setFilterPriority, filterTrust, setFilterTrust, trusts }) => {
+    useEffect(() => {
+        const onKeyDown = (e) => {
+            if (e.key === 'Escape') onClose();
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [onClose]);
+
     return (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-lg shadow-2xl w-full max-w-sm">
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={onClose}>
+            <div className="bg-white rounded-lg shadow-2xl w-full max-w-sm" onClick={(e) => e.stopPropagation()}>
                 <div className="p-6 border-b border-stone-200">
                     <h2 className="text-xl font-serif font-bold text-stone-900">Filter Tasks</h2>
                 </div>

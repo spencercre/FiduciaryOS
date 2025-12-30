@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { Inbox, CheckCircle, ArrowRight, FileArchive, Shield } from 'lucide-react';
 
@@ -7,15 +7,10 @@ export function InboxPage({ emails, trusts, canAccessPrivileged, onTriage }) {
   const [searchParams] = useSearchParams();
   const highlightMode = searchParams.get('highlight');
 
-  useEffect(() => {
-    if (highlightMode === 'hostile') {
-      // Find the first "Hostile" email (mock logic: finding Greg's email)
-      const hostileEmail = emails.find(e => e.sender.includes('greg'));
-      if (hostileEmail) {
-        setSelectedEmailId(hostileEmail.id);
-        // Scroll logic would go here if we had refs
-      }
-    }
+  const hostileEmailId = useMemo(() => {
+    if (highlightMode !== 'hostile') return null;
+    const hostileEmail = (emails || []).find((e) => String(e.sender || '').toLowerCase().includes('greg'));
+    return hostileEmail ? hostileEmail.id : null;
   }, [highlightMode, emails]);
 
   const visibleFolders = canAccessPrivileged ? ['quarantine', 'public', 'privileged'] : ['public'];
@@ -23,7 +18,8 @@ export function InboxPage({ emails, trusts, canAccessPrivileged, onTriage }) {
 
   const visibleEmails = emails.filter((e) => visibleFolders.includes(e.folder || 'quarantine'));
   const streamEmails = visibleEmails.filter((e) => (e.folder || 'quarantine') === streamFolder);
-  const selectedEmail = streamEmails.find((e) => e.id === selectedEmailId) || null;
+  const effectiveSelectedEmailId = selectedEmailId ?? hostileEmailId;
+  const selectedEmail = streamEmails.find((e) => e.id === effectiveSelectedEmailId) || null;
 
   const getTrustName = (id) => trusts.find((t) => t.id === id || String(t.id) === String(id))?.name || "Unknown Trust";
 

@@ -37,13 +37,13 @@ export function TrustDetail({
   // Then fallback to Firestore trusts if not found in seed data 
   const trust = SEED_TRUSTS.find(t => t.id === parseInt(trustId) || String(t.id) === String(trustId)) || trusts.find(t => t.id === trustId || String(t.id) === String(trustId));
   
-  if (!trust) return <div className="p-8 text-center text-stone-500 font-serif">Trust not found. <button onClick={() => navigate('/trusts')} className="text-racing-green underline">Go back</button></div>;
+  if (!trust) return <div className="p-8 text-center text-stone-500 font-serif">Trust not found. <button onClick={() => navigate('/app/trusts')} className="text-racing-green underline">Go back</button></div>;
   
   const showNexusWarning = trust.situs !== 'California'; 
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between mb-4 gap-4"><div className="flex items-center space-x-2 flex-1 min-w-0"><button onClick={() => navigate('/trusts')} className="text-stone-400 hover:text-stone-600 transition-colors"><ChevronLeft size={24} /></button><div className="flex items-center"><h1 className="font-serif text-2xl md:text-3xl font-bold text-stone-900 truncate tracking-tight">{trust.name}</h1><ChevronRight size={24} className="text-stone-300 ml-2" /></div></div><PrivilegeToggle isPrivileged={isPrivileged} setIsPrivileged={setIsPrivileged} disabled={disablePrivilegeToggle} /></div>
+      <div className="flex flex-wrap items-center justify-between mb-4 gap-4"><div className="flex items-center space-x-2 flex-1 min-w-0"><button onClick={() => navigate('/app/trusts')} className="text-stone-400 hover:text-stone-600 transition-colors"><ChevronLeft size={24} /></button><div className="flex items-center"><h1 className="font-serif text-2xl md:text-3xl font-bold text-stone-900 truncate tracking-tight">{trust.name}</h1><ChevronRight size={24} className="text-stone-300 ml-2" /></div></div><PrivilegeToggle isPrivileged={isPrivileged} setIsPrivileged={setIsPrivileged} disabled={disablePrivilegeToggle} /></div>
       {showNexusWarning && isPrivileged && (
         <JurisdictionWatchdog trust={trust} />
       )}
