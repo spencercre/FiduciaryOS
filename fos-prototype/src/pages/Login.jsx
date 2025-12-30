@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Shield, Lock, User, AlertCircle, CheckCircle } from 'lucide-react';
+import { supabase } from '../services/supabase';
 
 export const Login = () => {
   const navigate = useNavigate();
@@ -30,11 +31,14 @@ export const Login = () => {
         return;
     }
 
-    // Fallback to real Firebase Auth for other users (if configured)
     try {
-      // await signInWithEmailAndPassword(auth, email, password);
-      // For now, fail if not demo/demo
-      throw new Error("Invalid credentials. Please use the demo account.");
+      if (!supabase) throw new Error("Supabase is not configured. Please use the demo account.");
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      if (signInError) throw signInError;
+      navigate('/app');
     } catch (err) {
       setError(err.message);
       setIsLoading(false);

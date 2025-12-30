@@ -1,5 +1,6 @@
 import { db } from './firebase';
 import { collection, getDocs, doc, getDoc } from 'firebase/firestore';
+import { supabase } from './supabase';
 import { SEED_TRUSTS } from '../data/mockData';
 
 const COLLECTION_NAME = 'trusts';
@@ -8,6 +9,11 @@ export const trustService = {
   // Fetch all trusts (supports filtering by orgId in future)
   getTrusts: async () => {
     try {
+      if (supabase) {
+        const { data, error } = await supabase.from(COLLECTION_NAME).select('*');
+        if (error) throw error;
+        if (Array.isArray(data) && data.length) return data;
+      }
       if (db) {
         // Future: const q = query(collection(db, COLLECTION_NAME), where('orgId', '==', currentOrgId));
         const snapshot = await getDocs(collection(db, COLLECTION_NAME));
@@ -25,6 +31,15 @@ export const trustService = {
   // Get single trust by ID
   getTrustById: async (trustId) => {
     try {
+      if (supabase) {
+        const { data, error } = await supabase
+          .from(COLLECTION_NAME)
+          .select('*')
+          .eq('id', trustId)
+          .maybeSingle();
+        if (error) throw error;
+        if (data) return data;
+      }
       if (db) {
         const docRef = doc(db, COLLECTION_NAME, trustId.toString());
         const docSnap = await getDoc(docRef);

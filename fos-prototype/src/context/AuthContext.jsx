@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo } from 'react';
 import { auth } from '../services/firebase';
 import { onAuthStateChanged, signOut } from 'firebase/auth';
+import { supabase } from '../services/supabase';
 
 const AuthContext = createContext(null);
 
@@ -20,11 +21,34 @@ export const AuthProvider = ({ children }) => {
     };
     checkDemoAuth();
 
-    // Listen for Firebase Auth
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-    });
+    let unsubscribeAuth = () => {};
+
+    if (supabase) {
+      supabase.auth
+        .getSession()
+        .then(({ data }) => {
+          setUser(data?.session?.user ?? null);
+          setLoading(false);
+        })
+        .catch(() => {
+          setUser(null);
+          setLoading(false);
+        });
+
+      const { data } = supabase.auth.onAuthStateChange((_event, session) => {
+        setUser(session?.user ?? null);
+        setLoading(false);
+      });
+
+      unsubscribeAuth = () => {
+        data?.subscription?.unsubscribe();
+      };
+    } else {
+      unsubscribeAuth = onAuthStateChanged(auth, (currentUser) => {
+        setUser(currentUser);
+        setLoading(false);
+      });
+    }
 
     // Poll for Demo Mode changes (legacy support for simple local storage hacks)
     const interval = setInterval(() => {
@@ -34,7 +58,7 @@ export const AuthProvider = ({ children }) => {
     }, 1000);
 
     return () => {
-      unsubscribe();
+      unsubscribeAuth();
       clearInterval(interval);
     };
   }, [isDemoMode]);
@@ -55,7 +79,11 @@ export const AuthProvider = ({ children }) => {
 
   const logout = async () => {
     try {
-      await signOut(auth);
+      if (supabase) {
+        await supabase.auth.signOut();
+      } else {
+        await signOut(auth);
+      }
       localStorage.removeItem('fos_demo_auth');
       localStorage.removeItem('fos_lead');
       setIsDemoMode(false);

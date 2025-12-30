@@ -148,7 +148,11 @@ export const GetStarted = () => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, code })
     });
-    const data = await response.json().catch(() => ({}));
+    if (response.status === 404) {
+      throw new Error('Email delivery is not configured');
+    }
+    const contentType = response.headers.get('content-type') || '';
+    const data = contentType.includes('application/json') ? await response.json().catch(() => ({})) : {};
     if (!response.ok || !data?.ok) {
       throw new Error(data?.error || 'Failed to send verification email');
     }
