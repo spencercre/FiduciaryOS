@@ -63,7 +63,8 @@ export const GetStarted = () => {
     lastName: '',
     companyWebsite: '',
     orgSize: '',
-    password: ''
+    password: '',
+    provider: 'email'
   });
   const [verificationCode, setVerificationCode] = useState('');
   const [codeDigits, setCodeDigits] = useState(['', '', '', '', '', '']);
@@ -109,22 +110,13 @@ export const GetStarted = () => {
     passwordRules.numberSymbolOrWhitespace;
 
   const handleSso = (provider) => {
-    try {
-      const lead = {
-        createdAt: new Date().toISOString(),
-        provider,
-        email: signup.email || '',
-        firstName: signup.firstName || '',
-        lastName: signup.lastName || '',
-        companyWebsite: signup.companyWebsite || '',
-        orgSize: signup.orgSize || ''
-      };
-      localStorage.setItem('fos_lead', JSON.stringify(lead));
-      localStorage.setItem('fos_demo_auth', 'true');
-    } catch (e) {
-      void e;
-    }
-    navigate('/app');
+    // 1. Record the provider (Google, Microsoft, Apple)
+    updateSignup('provider', provider);
+    
+    // 2. Instead of navigating immediately, advance to the "Name" step.
+    // This preserves the "bit-by-bit" data collection flow (Name -> Website -> OrgSize)
+    // while skipping the "Email Verification" and "Password Creation" steps which SSO handles.
+    setStep('name');
   };
 
   const seedVerificationCode = () => {
@@ -230,7 +222,7 @@ export const GetStarted = () => {
     try {
       const lead = {
         createdAt: new Date().toISOString(),
-        provider: 'email',
+        provider: signup.provider || 'email',
         email: signup.email,
         firstName: signup.firstName,
         lastName: signup.lastName,
