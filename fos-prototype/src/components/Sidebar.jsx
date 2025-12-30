@@ -1,11 +1,10 @@
 import React from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, Link } from 'react-router-dom';
 import { 
   Shield, Activity, Inbox, Briefcase, BrainCircuit, Users, 
   BookOpen, ClipboardList, FileText, Hourglass, Settings, X, LogOut 
 } from 'lucide-react';
 import { PrivilegeToggle } from './PrivilegeToggle';
-import { AuditTicker } from './AuditTicker';
 
 export function Sidebar({ 
   isPrivileged, 
@@ -33,7 +32,7 @@ export function Sidebar({
   ];
 
   return (
-    <div className={isMobile ? `fixed inset-y-0 left-0 z-50 w-64 bg-stone-900 text-white transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'}` : "w-64 bg-stone-900 text-stone-200 flex-shrink-0 min-h-screen sticky top-0 hidden md:flex flex-col border-r border-stone-800"}>
+    <div className={isMobile ? `fixed inset-y-0 left-0 z-50 w-64 bg-stone-900 text-white transform transition-transform duration-300 ease-in-out ${isOpen ? 'translate-x-0' : '-translate-x-full'}` : "w-64 bg-stone-900 text-stone-200 flex-shrink-0 h-screen sticky top-0 hidden md:flex flex-col border-r border-stone-800 overflow-y-auto"}>
       <div className="p-6 flex items-center justify-between">
         <div className="flex items-center space-x-2">
           <Shield className="text-racing-green h-8 w-8 fill-current" />
@@ -42,7 +41,7 @@ export function Sidebar({
         {isMobile && <button onClick={() => setIsOpen(false)} className="text-stone-400"><X size={24} /></button>}
       </div>
       
-      <nav className="flex-1 px-4 space-y-2 mt-4">
+      <nav className="px-4 space-y-2 mt-4 mb-4">
         {menuItems.map((item) => (
           <div key={item.id}>
             {item.spacer && <div className="h-px bg-stone-800 my-4"></div>}
@@ -72,7 +71,10 @@ export function Sidebar({
           disabled={!canAccessPrivileged} 
           className="w-full justify-between p-3 border-stone-700 bg-stone-900" 
         />
-        <AuditTicker />
+        
+        <div className="mt-3 text-center">
+          <Link to="/app/audit-log" className="text-[10px] text-stone-500 hover:text-stone-300 underline font-serif">View Full Audit Log</Link>
+        </div>
 
         {isAuthenticated && (
           <div className="mt-4 pt-4 border-t border-stone-800">

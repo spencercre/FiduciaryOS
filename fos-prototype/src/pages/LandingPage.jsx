@@ -1,6 +1,23 @@
 import React, { useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Shield, ChevronRight, Menu, X, Check } from 'lucide-react';
+import {
+  Shield,
+  ChevronRight,
+  Menu,
+  X,
+  Check,
+  Activity,
+  Inbox,
+  Briefcase,
+  BrainCircuit,
+  Users,
+  BookOpen,
+  ClipboardList,
+  FileText,
+  Hourglass,
+  Settings,
+  Key
+} from 'lucide-react';
 
 export const LandingPage = () => {
   const navigate = useNavigate();
@@ -141,7 +158,7 @@ export const LandingPage = () => {
                 The Operating System for <span className="text-[#007A65]">Professional Fiduciaries</span>.
               </h1>
               <p className="text-xl text-slate-600 mb-10 leading-relaxed max-w-2xl">
-                Eliminate the "Bus Factor", automate compliance, and protect your license with the first purpose-built platform for Trust Administration.
+                Run trust administration from a single pane of glass—built to reduce personal liability, preserve privilege, and keep every action audit-ready.
               </p>
               
               <div className="flex flex-col sm:flex-row gap-4">
@@ -185,7 +202,7 @@ export const LandingPage = () => {
           </div>
         </div>
 
-        <section id="platform" className="py-24 bg-white">
+        <section id="platform" className="py-24 bg-[#F1FBF7] border-y border-[#D6EFE7]">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid lg:grid-cols-2 gap-10 items-start">
               <div>
@@ -194,83 +211,98 @@ export const LandingPage = () => {
                 <p className="mt-4 text-lg text-slate-600 leading-relaxed max-w-xl">
                   FOS turns scattered checklists, email threads, and tribal knowledge into a repeatable operating model: deadlines, decisions, documents, and audit trail.
                 </p>
-                <div className="mt-8 grid sm:grid-cols-3 gap-4">
-                  {[
-                    { value: '30d', label: 'Compliance horizon' },
-                    { value: '1', label: 'Unified inbox' },
-                    { value: '∞', label: 'Audit trail' }
-                  ].map((stat) => (
-                    <div key={stat.label} className="rounded-xl border border-slate-100 bg-slate-50 p-4">
-                      <div className="text-2xl font-serif font-bold text-[#183B56]">{stat.value}</div>
-                      <div className="mt-1 text-xs font-bold uppercase tracking-[0.22em] text-slate-400">{stat.label}</div>
+                <div className="mt-8">
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="w-12 h-12 bg-[#E6F4F1] rounded-lg flex items-center justify-center mb-6">
+                        <Activity className="w-6 h-6 text-[#007A65]" />
+                      </div>
+                      <h3 className="text-xl font-bold text-[#183B56] mb-3">Command Center</h3>
+                      <p className="text-slate-600">Your landing page for every trust: triage, deadlines, and risk signals in one place.</p>
                     </div>
-                  ))}
+
+                    <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="w-12 h-12 bg-[#FFF1E6] rounded-lg flex items-center justify-center mb-6">
+                        <BrainCircuit className="w-6 h-6 text-[#FF5C35]" />
+                      </div>
+                      <h3 className="text-xl font-bold text-[#183B56] mb-3">Fiduciary Mind</h3>
+                      <p className="text-slate-600">Query documents and correspondence to draft responses faster with defensible context.</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid sm:grid-cols-2 gap-4">
+                    <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="w-12 h-12 bg-[#EEF2FF] rounded-lg flex items-center justify-center mb-6">
+                        <Shield className="w-6 h-6 text-[#183B56]" />
+                      </div>
+                      <h3 className="text-xl font-bold text-[#183B56] mb-3">Compliance Watchdog</h3>
+                      <p className="text-slate-600">A forward-looking view of filings and duties so deadlines don’t become liabilities.</p>
+                    </div>
+
+                    <div className="p-6 bg-white rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+                      <div className="w-12 h-12 bg-[#FFFBEB] rounded-lg flex items-center justify-center mb-6">
+                        <Key className="w-6 h-6 text-[#B45309]" />
+                      </div>
+                      <h3 className="text-xl font-bold text-[#183B56] mb-3">The Iron Key</h3>
+                      <p className="text-slate-600">Automated successor handoff safeguards that activate on inactivity so nothing gets stranded.</p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 shadow-sm overflow-hidden">
+              <div className="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
                 <div className="p-5 border-b border-slate-100 flex items-center justify-between">
-                  <div className="text-sm font-bold text-slate-700">FOS Command Center</div>
-                  <div className="text-xs font-semibold text-slate-400">Live preview</div>
+                  <div className="text-sm font-bold text-slate-700">Application navigation</div>
+                  <div className="text-xs font-semibold text-slate-400">Preview</div>
                 </div>
-                <div className="p-6">
-                  <div className="grid grid-cols-12 gap-4">
-                    <div className="col-span-5 space-y-3">
-                      {['Compliance Roadmap', 'Context Inbox', 'The Vault'].map((row) => (
-                        <div key={row} className="h-10 rounded-lg border border-slate-100 bg-white flex items-center px-3 text-sm font-semibold text-slate-700">
-                          {row}
-                        </div>
-                      ))}
-                      <div className="h-24 rounded-lg border border-slate-100 bg-white" />
-                    </div>
-                    <div className="col-span-7 space-y-3">
-                      <div className="h-10 rounded-lg border border-slate-100 bg-white" />
-                      <div className="grid grid-cols-2 gap-3">
-                        <div className="h-28 rounded-lg border border-slate-100 bg-white" />
-                        <div className="h-28 rounded-lg border border-slate-100 bg-white" />
+                <div className="p-0">
+                  <div className="grid grid-cols-12">
+                    <div className="col-span-5 sm:col-span-4 bg-slate-900 text-slate-200">
+                      <div className="px-5 py-5 flex items-center gap-2 border-b border-slate-800">
+                        <Shield className="w-6 h-6 text-[#007A65]" />
+                        <div className="font-serif font-bold tracking-wide text-slate-100">FOS</div>
                       </div>
-                      <div className="h-24 rounded-lg border border-slate-100 bg-white" />
+                      <div className="px-4 py-4 space-y-1">
+                        {[
+                          { icon: Activity, label: 'Command Center', active: true },
+                          { icon: Inbox, label: 'Context Inbox' },
+                          { icon: Briefcase, label: 'My Trusts' },
+                          { icon: BrainCircuit, label: 'Fiduciary Mind' },
+                          { icon: Users, label: 'Meet-Me Room' },
+                          { icon: BookOpen, label: 'Rolodex' },
+                          { icon: ClipboardList, label: 'Compliance Roadmap' },
+                          { icon: FileText, label: 'The Vault' },
+                          { icon: Hourglass, label: 'Succession Protocol' },
+                          { icon: Settings, label: 'Admin Console' }
+                        ].map((item) => (
+                          <div
+                            key={item.label}
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-md text-sm font-semibold ${
+                              item.active ? 'bg-[#007A65] text-white' : 'text-slate-300'
+                            }`}
+                          >
+                            <item.icon className={`w-5 h-5 ${item.active ? 'text-white' : 'text-slate-400'}`} />
+                            <span className="truncate">{item.label}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="col-span-7 sm:col-span-8 bg-white">
+                      <div className="p-6">
+                        <div className="h-10 rounded-lg border border-slate-200 bg-slate-50" />
+                        <div className="mt-4 grid grid-cols-2 gap-3">
+                          <div className="h-28 rounded-lg border border-slate-200 bg-white shadow-sm" />
+                          <div className="h-28 rounded-lg border border-slate-200 bg-white shadow-sm" />
+                        </div>
+                        <div className="mt-3 h-28 rounded-lg border border-slate-200 bg-white shadow-sm" />
+                        <div className="mt-3 h-24 rounded-lg border border-slate-200 bg-white shadow-sm" />
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="mt-16 grid md:grid-cols-3 gap-12">
-              <div className="p-6 bg-slate-50 rounded-xl border border-slate-100 hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mb-6">
-                   <Shield className="w-6 h-6 text-red-600" />
-                </div>
-                <h3 className="text-xl font-bold text-[#183B56] mb-3">The Bus Factor</h3>
-                <p className="text-slate-600">
-                  Automated "Dead Man's Switch" ensures your successor has immediate, encrypted access if you become incapacitated.
-                </p>
-              </div>
-              
-              <div className="p-6 bg-slate-50 rounded-xl border border-slate-100 hover:shadow-md transition-shadow">
-                 <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mb-6">
-                   <svg className="w-6 h-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                   </svg>
-                </div>
-                <h3 className="text-xl font-bold text-[#183B56] mb-3">Jurisdiction Watchdog</h3>
-                <p className="text-slate-600">
-                  Geo-fenced alerts warn you when your physical location risks triggering accidental tax nexus for the Trust.
-                </p>
-              </div>
-
-              <div className="p-6 bg-slate-50 rounded-xl border border-slate-100 hover:shadow-md transition-shadow">
-                <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mb-6">
-                   <svg className="w-6 h-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                   </svg>
-                </div>
-                <h3 className="text-xl font-bold text-[#183B56] mb-3">Visual Compliance</h3>
-                <p className="text-slate-600">
-                  Turn abstract duties into a concrete roadmap. Every action is logged, stamped, and auditable forever.
-                </p>
-              </div>
-            </div>
           </div>
         </section>
 
@@ -329,24 +361,29 @@ export const LandingPage = () => {
               <p className="mt-4 text-lg text-slate-600">A simple model that supports solo fiduciaries and growing firms.</p>
             </div>
 
-            <div className="mt-10 grid md:grid-cols-3 gap-6">
+            <div className="mt-10 grid md:grid-cols-4 gap-6">
               {[ 
                 { name: 'Starter', price: '$0', note: 'For evaluation and demos', cta: 'Get started free', primary: false, items: ['Single workspace', 'Sample data', 'Core navigation', 'Demo login'] },
-                { name: 'Professional', price: '$249', note: 'Per user / month', cta: 'Schedule a demo', primary: true, items: ['Multi-trust operations', 'Inbox triage + audit', 'Vault + permissions', 'Compliance roadmap'] },
-                { name: 'Firm', price: 'Custom', note: 'For teams and integrations', cta: 'Talk to sales', primary: false, items: ['SSO & provisioning', 'Custom retention', 'Reporting exports', 'Implementation support'] }
+                { name: 'Standard', price: '$149', note: 'Per user / month', cta: 'Schedule a demo', primary: true, items: ['Ledger', 'The Vault', 'Privilege Firewall'] },
+                { name: 'Professional', price: '$249', note: 'Per user / month', cta: 'Schedule a demo', primary: false, items: ['Everything in Standard', 'AI', 'Court-ready audit', 'Accounting engine'] },
+                { name: 'Dynasty', price: '$449', note: 'Per user / month', cta: 'Schedule a demo', primary: false, items: ['Everything in Professional', 'Successor Protocol', 'Nexus Watchdog'] }
               ].map((plan) => (
                 <div key={plan.name} className={`rounded-2xl border ${plan.primary ? 'border-[#183B56] shadow-md' : 'border-slate-200'} bg-white p-6`}>
-                  <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-start gap-3">
                     <div>
-                      <div className="text-sm font-bold text-slate-900">{plan.name}</div>
+                      <div className="flex items-center gap-2">
+                        <div className="text-sm font-bold text-slate-900">{plan.name}</div>
+                        {plan.primary && (
+                          <div className="px-2 py-1 rounded-full bg-[#E6F4F1] text-[#007A65] text-[11px] font-bold uppercase tracking-widest">
+                            Recommended
+                          </div>
+                        )}
+                      </div>
                       <div className="mt-2 flex items-baseline gap-2">
                         <div className="text-3xl font-serif font-bold text-[#183B56]">{plan.price}</div>
-                        <div className="text-xs font-semibold text-slate-400">{plan.note}</div>
+                        <div className="text-xs font-semibold text-slate-400 whitespace-nowrap">{plan.note}</div>
                       </div>
                     </div>
-                    {plan.primary && (
-                      <div className="px-2 py-1 rounded-full bg-[#E6F4F1] text-[#007A65] text-[11px] font-bold uppercase tracking-widest">Most popular</div>
-                    )}
                   </div>
 
                   <div className="mt-6">
@@ -394,7 +431,7 @@ export const LandingPage = () => {
                   {[ 
                     { q: 'Is this a replacement for my email?', a: 'No. It organizes fiduciary work around inbox triage, deadlines, and artifacts.' },
                     { q: 'Does it support privileged vs public record?', a: 'Yes. Privileged mode can be restricted and audit breadcrumbs are recorded.' },
-                    { q: 'Can I try it without configuring Firebase?', a: 'Yes. Use the demo credentials to explore the workflow.' }
+                    { q: 'Can I try it out before I purchase?', a: 'Yes. Click the "Get Started Free" button for a run of the entire application and see how it can enhance your workflows and your protection.' }
                   ].map((row) => (
                     <div key={row.q} className="rounded-xl border border-slate-100 bg-slate-50 p-4">
                       <div className="text-sm font-bold text-slate-900">{row.q}</div>

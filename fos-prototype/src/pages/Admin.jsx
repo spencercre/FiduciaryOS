@@ -50,13 +50,14 @@ export function Admin() {
     if (field === 'insurancePolicy') return 'POL-••••-••••••••';
     return String(value || '').replace(/./g, '•');
   };
-  const tierRank = useMemo(() => ({ standard: 0, pro: 1, dynasty: 2 }), []);
+  const tierRank = useMemo(() => ({ starter: 0, standard: 1, pro: 2, dynasty: 3 }), []);
 
   const tiers = useMemo(
     () => [
-      { id: 'standard', name: 'Standard', price: 150, accent: 'border-stone-200' },
-      { id: 'pro', name: 'Standard Pro', price: 250, accent: 'border-amber-200' },
-      { id: 'dynasty', name: 'Dynasty', price: 450, accent: 'border-purple-200' }
+      { id: 'starter', name: 'Starter', price: 0, accent: 'border-slate-200' },
+      { id: 'standard', name: 'Standard', price: 149, accent: 'border-racing-green-light' },
+      { id: 'pro', name: 'Professional', price: 249, accent: 'border-amber-200' },
+      { id: 'dynasty', name: 'Dynasty', price: 449, accent: 'border-purple-200' }
     ],
     []
   );
@@ -72,7 +73,7 @@ export function Admin() {
 
   const modules = useMemo(
     () => [
-      { id: 'core', label: 'Core Ledger & Vault', tiers: ['standard', 'pro', 'dynasty'], icon: FileText },
+      { id: 'core', label: 'Core Ledger & Vault', tiers: ['starter', 'standard', 'pro', 'dynasty'], icon: FileText },
       { id: 'privilege', label: 'Privilege Firewall', tiers: ['standard', 'pro', 'dynasty'], icon: Shield },
       { id: 'oracle', label: 'AI Fiduciary Mind', tiers: ['pro', 'dynasty'], icon: BrainCircuit },
       { id: 'audit', label: 'Court-Ready Audit Logs', tiers: ['pro', 'dynasty'], icon: History },
@@ -85,6 +86,7 @@ export function Admin() {
 
   const featuresByTier = useMemo(
     () => ({
+      starter: ['core'],
       standard: ['core', 'privilege'],
       pro: ['core', 'privilege', 'oracle', 'audit', 'accounting'],
       dynasty: ['core', 'privilege', 'oracle', 'audit', 'accounting', 'legacy', 'nexus']
@@ -171,10 +173,10 @@ export function Admin() {
          </div>
 
          <div className="p-6">
-           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+           <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
             {tiers.map((tier) => {
-              const isCurrent = tier.id === currentTier;
-              const isSelected = tier.id === selectedTier;
+              const isCurrent = currentTier === tier.id;
+              const isSelected = selectedTier === tier.id;
               const isUpgrade = tierRank[tier.id] > tierRank[currentTier];
               const isDowngrade = tierRank[tier.id] < tierRank[currentTier];
               const ringClass = isSelected
@@ -194,9 +196,9 @@ export function Admin() {
                    <div className="flex items-start justify-between gap-3">
                      <div>
                        <div className="font-serif font-bold text-lg text-stone-900">{tier.name}</div>
-                       <div className="mt-2 flex items-end gap-2">
+                       <div className="mt-2 flex items-baseline gap-1">
                          <div className="text-3xl font-bold text-racing-green">${tier.price}</div>
-                         <div className="text-sm text-stone-500">/month</div>
+                         <div className="text-xs text-stone-500 whitespace-nowrap">/ user / mo</div>
                        </div>
                      </div>
 
@@ -216,6 +218,7 @@ export function Admin() {
                    </div>
 
                    <div className="mt-4 text-xs text-stone-500">
+                     {tier.id === 'starter' && 'Evaluation only.'}
                      {tier.id === 'standard' && 'Ledger + Vault, Privilege Firewall.'}
                      {tier.id === 'pro' && 'Adds AI + court-ready audit + accounting engine.'}
                      {tier.id === 'dynasty' && 'Adds successor protocol + nexus watchdog.'}
@@ -361,7 +364,7 @@ export function Admin() {
                    <item.icon size={16} className="text-stone-400" />
                    <div className="flex-1">
                      <p className="text-xs text-stone-500 uppercase font-bold">{item.label}</p>
-                    {editingField === item.key && hasSuccessorVaultAccess ? (
+                    {editingField === item.key && successorVaultInSelected ? (
                       <input 
                         type="text" 
                         value={vaultData[item.key]} 
@@ -372,8 +375,8 @@ export function Admin() {
                         className="w-full p-1 border border-racing-green rounded text-sm font-mono bg-white"
                       />
                     ) : (
-                      <p className={`text-sm font-mono ${hasSuccessorVaultAccess ? (item.sensitive ? 'text-stone-600' : 'text-stone-800') : 'text-stone-500'}`}>
-                        {hasSuccessorVaultAccess
+                      <p className={`text-sm font-mono ${successorVaultInSelected ? (item.sensitive ? 'text-stone-600' : 'text-stone-800') : 'text-stone-500'}`}>
+                        {successorVaultInSelected
                           ? item.sensitive
                             ? maskValue(vaultData[item.key], item.key)
                             : vaultData[item.key]
@@ -383,7 +386,7 @@ export function Admin() {
                   </div>
                 </div>
                 <div className="flex items-center space-x-1">
-                  {item.sensitive && hasSuccessorVaultAccess && (
+                  {item.sensitive && successorVaultInSelected && (
                     <button 
                       onClick={() => toggleReveal(item.key)} 
                       className="p-2 text-stone-400 hover:text-stone-600 hover:bg-stone-100 rounded transition"
@@ -392,7 +395,7 @@ export function Admin() {
                       {revealedFields[item.key] ? <EyeOff size={14}/> : <Eye size={14}/>}
                     </button>
                   )}
-                  {hasSuccessorVaultAccess && (
+                  {successorVaultInSelected && (
                     <button 
                       onClick={() => setEditingField(item.key)} 
                       className="p-2 text-stone-400 hover:text-racing-green hover:bg-stone-100 rounded transition"
@@ -407,7 +410,7 @@ export function Admin() {
              
             <div className="pt-4 border-t border-stone-200 flex justify-between items-center">
               <p className="text-xs text-stone-400">Last updated: Today, 10:42 AM</p>
-              <button className={`px-4 py-2 rounded font-bold text-sm transition flex items-center ${hasSuccessorVaultAccess ? 'bg-stone-800 text-white hover:bg-stone-900' : 'bg-stone-200 text-stone-500 cursor-not-allowed'}`} disabled={!hasSuccessorVaultAccess}>
+              <button className={`px-4 py-2 rounded font-bold text-sm transition flex items-center ${successorVaultInSelected ? 'bg-stone-800 text-white hover:bg-stone-900' : 'bg-stone-200 text-stone-500 cursor-not-allowed'}`} disabled={!successorVaultInSelected}>
                 <CheckCircle size={14} className="mr-2"/> Save Changes
               </button>
             </div>

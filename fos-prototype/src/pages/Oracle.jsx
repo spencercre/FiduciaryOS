@@ -100,7 +100,7 @@ export function Oracle({ initialPrompt, contextTrust, onSelectContext }) {
   const promptSuggestions = getPromptSuggestions();
 
   return (
-    <div className="walnut-card h-[600px] flex flex-col p-0 overflow-hidden animate-fadeIn">
+    <div className="walnut-card h-[450px] flex flex-col p-0 overflow-hidden animate-fadeIn">
         <div className="p-4 border-b border-stone-200 bg-stone-50 flex justify-between items-center"><h2 className="font-serif font-bold text-stone-800 text-lg flex items-center"><BrainCircuit className="mr-2 text-racing-green" size={24} /> The Oracle</h2><span className="text-xs text-stone-500 font-serif italic">{contextTrust ? `Context: ${contextTrust.name}` : "Global Intelligence"}</span></div>
         <div className="flex-1 overflow-y-auto p-4 bg-[#fdfbf7] space-y-4">
           {messages.map(msg => (
