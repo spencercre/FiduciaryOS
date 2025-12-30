@@ -66,7 +66,9 @@ export function CommandCenter({ onAnalyzeRisk }) {
                                     <div className={`mt-1 w-2 h-2 rounded-full ${isOverdue ? 'bg-red-600 animate-pulse' : isUrgent ? 'bg-orange-500' : 'bg-stone-300'}`}></div>
                                     <div>
                                         <p className={`text-sm font-bold ${isOverdue ? 'text-red-700' : 'text-stone-700 group-hover:text-racing-green'}`}>{task.title}</p>
-                                        <p className="text-xs text-stone-400 font-serif">Trust #{task.trustId}</p>
+                                        <p className="text-xs text-stone-400 font-serif">
+                                            {SEED_TRUSTS.find(t => t.id === task.trustId)?.name || `Trust #${task.trustId}`}
+                                        </p>
                                     </div>
                                 </div>
                                 <span className={`text-[10px] font-bold px-2 py-1 rounded border ${
