@@ -11,7 +11,15 @@ export function CommandCenter({ onAnalyzeRisk }) {
     // --- RISK RADAR LOGIC ---
     
     // 1. Compliance Watchdog (Overdue & Upcoming)
-    const upcomingTasks = SEED_TASKS.filter(t => t.status !== 'done').slice(0, 4); // Just take top 4 for demo
+    const upcomingTasks = SEED_TASKS
+        .filter(t => t.status !== 'done' && t.due !== 'ASAP')
+        .sort((a, b) => {
+            const priority = { "Today": 1, "Tomorrow": 2, "2 Days": 3 };
+            const pa = priority[a.due] || 99;
+            const pb = priority[b.due] || 99;
+            return pa - pb;
+        })
+        .slice(0, 3); // Just take top 3 for compactness
     
     // 2. Beneficiary Sentiment (Mock Logic)
     const sentimentScore = 42; // Hostile (< 50)
