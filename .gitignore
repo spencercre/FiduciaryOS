@@ -1,0 +1,12 @@
+# Kept off GitHub: secrets, downloaded packages, build output and Office temp files
+.env
+.env.*
+*.local
+node_modules/
+.next/
+dist/
+~$*
+~WRL*.tmp
+*.tmp
+.DS_Store
+Thumbs.db
